@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.cooketricks.com
+
+# Sitemaps
+Sitemap: https://www.cooketricks.com/sitemap.xml
