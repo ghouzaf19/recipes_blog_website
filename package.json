@@ -5,13 +5,29 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:blog": "npx tsx scripts/generate-blog.ts",
+    "generate:blog:dry": "npx tsx scripts/generate-blog.ts --dry-run"
   },
   "dependencies": {
+    "@google/genai": "^1.51.0",
+    "@portabletext/react": "^6.0.3",
+    "@sanity/icons": "^3.7.4",
+    "@sanity/image-url": "^2.1.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "groq-sdk": "^1.1.2",
+    "lucide-react": "^1.8.0",
     "next": "16.2.3",
+    "next-sanity": "^12.2.2",
+    "next-sitemap": "^4.2.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sanity": "^5.21.0",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
