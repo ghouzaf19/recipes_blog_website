@@ -122,7 +122,7 @@ export default async function BlogIndex(
     displayTitle = formattedTag;
   }
 
-  let queryFilter = `_type == "post" && defined(slug.current)`;
+  let queryFilter = `_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))`;
   
   if (q) {
     queryFilter += ` && (title match "*${q}*" || excerpt match "*${q}*")`;

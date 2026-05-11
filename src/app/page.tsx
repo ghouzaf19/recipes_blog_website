@@ -73,7 +73,7 @@ export default async function Home() {
 
   try {
     posts = await sanityFetch<PostCard[]>({
-      query: `*[_type == "post" && defined(slug.current)] | order(publishedAt desc) [0..30] {
+      query: `*[_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))] | order(publishedAt desc) [0..30] {
         _id, title, slug, publishedAt, excerpt,
         mainImage { asset, alt },
         prepTime, cookTime, difficulty, servings, cuisine,

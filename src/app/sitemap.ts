@@ -14,7 +14,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cooketricks.co
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all published blog post slugs + their last-modified dates
   const posts: { slug: string; updatedAt: string }[] = await client.fetch(
-    `*[_type == "post" && defined(slug.current)] | order(publishedAt desc) {
+    `*[_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))] | order(publishedAt desc) {
       "slug": slug.current,
       "updatedAt": coalesce(_updatedAt, publishedAt)
     }`

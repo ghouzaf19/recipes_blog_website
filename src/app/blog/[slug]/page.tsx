@@ -56,7 +56,7 @@ const sitemapClient = createClient({
 
 export async function generateStaticParams() {
   const slugs: { slug: string }[] = await sitemapClient.fetch(
-    `*[_type == "post" && defined(slug.current)]{ "slug": slug.current }`
+    `*[_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))]{ "slug": slug.current }`
   );
   return slugs.map(({ slug }) => ({ slug }));
 }
@@ -65,7 +65,7 @@ export async function generateStaticParams() {
 
 async function getPost(slug: string): Promise<Post | null> {
   return sanityFetch<Post | null>({
-    query: `*[_type == "post" && slug.current == $slug][0] {
+    query: `*[_type == "post" && slug.current == $slug && !(_id in path('drafts.**'))][0] {
       _id,
       title,
       slug,
