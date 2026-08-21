@@ -18,5 +18,5 @@ export async function GET(request: NextRequest) {
   const post = await getPreviewPostById(id);
   if (!post) return new Response('Post not found', { status: 404 });
   (await draftMode()).enable();
-  redirect(`/blog/${post.slug}`);
+  redirect(`/blog/${post.slug}?preview_id=${post.id}`);
 }

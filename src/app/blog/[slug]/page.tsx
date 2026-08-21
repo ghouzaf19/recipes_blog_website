@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import { RecipeCard } from '@/components/RecipeCard';
 import { SafeHtml } from '@/components/SafeHtml';
-import { getAllPosts, getPostBySlug, safeJsonLd, SITE_URL, type BlogPost } from '@/lib/wordpress';
+import { getAllPosts, getPostBySlug, getPreviewPostById, safeJsonLd, SITE_URL, type BlogPost } from '@/lib/wordpress';
 
 export const revalidate = 300;
 
@@ -15,21 +15,26 @@ export async function generateStaticParams() {
   catch (error) { console.error('Static params could not load from WordPress:', error); return []; }
 }
 
-async function loadPost(slug: string): Promise<BlogPost | null> {
+async function loadPost(slug: string, previewId?: number): Promise<BlogPost | null> {
   const preview = (await draftMode()).isEnabled;
+  if (preview && previewId && Number.isInteger(previewId)) {
+    const post = await getPreviewPostById(previewId);
+    return post?.slug === slug ? post : null;
+  }
   return getPostBySlug(slug, preview);
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview_id?: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await loadPost(slug);
+  const { preview_id } = await searchParams;
+  const post = await loadPost(slug, Number(preview_id));
   if (!post) return { title: 'Page Not Found' };
   const image = post.data.socialImage ?? post.data.featuredImage;
   const title = post.data.seo.title || post.title;
   const description = post.data.seo.description || post.excerpt || post.title;
   const canonical = post.data.seo.canonicalUrl || `${SITE_URL}/blog/${post.slug}`;
   return {
-    title, description, alternates: { canonical },
+    title, description, alternates: { canonical }, robots: preview_id ? { index: false, follow: false } : undefined,
     openGraph: { title, description, url: canonical, type: 'article', publishedTime: post.publishedAt, modifiedTime: post.modifiedAt, authors: post.data.author?.name ? [post.data.author.name] : undefined, images: image ? [{ url: image.url, width: image.width, height: image.height, alt: image.alt || post.title }] : [] },
     twitter: { card: 'summary_large_image', title, description, images: image ? [image.url] : [] },
   };
@@ -54,10 +59,11 @@ function structuredData(post: BlogPost) {
   };
 }
 
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function BlogPostPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview_id?: string }> }) {
   const { slug } = await params;
+  const { preview_id } = await searchParams;
   let post: BlogPost | null = null;
-  try { post = await loadPost(slug); } catch (error) { console.error('WordPress post fetch failed:', error); }
+  try { post = await loadPost(slug, Number(preview_id)); } catch (error) { console.error('WordPress post fetch failed:', error); }
   if (!post) notFound();
   const recipe = post.data.recipe;
   const breadcrumb = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL }, { '@type': 'ListItem', position: 2, name: 'Recipes & Guides', item: `${SITE_URL}/blog` }, { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/blog/${post.slug}` }] };
