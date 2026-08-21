@@ -1,4 +1,5 @@
 import 'server-only';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cooketricks.com').replace(/\/$/, '');
 const API_URL = (process.env.WORDPRESS_API_URL ?? 'https://cms.cooketricks.com/wp-json/wp/v2').replace(/\/$/, '');
@@ -164,4 +165,12 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 
 export function safeJsonLd(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+export function validPreviewToken(id: number, token: string): boolean {
+  const secret = process.env.COOKETRICKS_PREVIEW_SECRET ?? '';
+  if (!Number.isInteger(id) || id < 1 || !secret || !token) return false;
+  const expected = createHmac('sha256', secret).update(String(id)).digest('hex');
+  const left = Buffer.from(token); const right = Buffer.from(expected);
+  return left.length === right.length && timingSafeEqual(left, right);
 }
