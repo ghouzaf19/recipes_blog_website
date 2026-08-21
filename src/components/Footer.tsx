@@ -30,13 +30,18 @@ export default function Footer() {
             <div>
               <p className="text-gray-900 font-bold mb-4">Recipes</p>
               <ul className="text-gray-600 font-normal normal-case tracking-normal">
-                {["Dinners", "Meals", "Ingredients", "Occasions"].map((l) => (
-                  <li key={l} className="mb-2">
+                {[
+                  { label: "Dinners", href: "/blog?mealType=dinner" },
+                  { label: "Breakfast", href: "/blog?mealType=breakfast" },
+                  { label: "Vegetarian", href: "/blog?diet=vegetarian" },
+                  { label: "Holidays", href: "/blog?occasion=holidays" },
+                ].map((item) => (
+                  <li key={item.label} className="mb-2">
                     <Link
-                      href={`/blog?tag=${l.toLowerCase()}`}
+                      href={item.href}
                       className="hover:text-primary transition-colors"
                     >
-                      {l}
+                      {item.label}
                     </Link>
                   </li>
                 ))}

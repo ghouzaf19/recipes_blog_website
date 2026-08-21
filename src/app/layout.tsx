@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SITE_URL } from "@/lib/wordpress";
 
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 
@@ -17,12 +18,12 @@ const sans = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.cooketricks.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "CookeTricks - Expert Culinary Tricks & Recipes",
+    default: "CookeTricks - Recipes & Practical Cooking Guides",
     template: "%s | CookeTricks"
   },
-  description: "Discover the best cooking tricks, expert culinary hacks, and delicious recipes from around the world. Master your kitchen with CookeTricks.",
+  description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
   alternates: {
     canonical: '/',
   },
@@ -39,18 +40,17 @@ export const metadata: Metadata = {
   },
   // Additional metadata for better SEO
   openGraph: {
-    title: "CookeTricks - Expert Culinary Tricks & Recipes",
-    description: "Discover the best cooking tricks, expert culinary hacks, and delicious recipes from around the world. Master your kitchen with CookeTricks.",
-    url: "https://www.cooketricks.com",
+    title: "CookeTricks - Recipes & Practical Cooking Guides",
+    description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
+    url: SITE_URL,
     siteName: "CookeTricks",
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: "summary_large_image",
-    title: "CookeTricks - Expert Culinary Tricks & Recipes",
-    creator: '@cooketricks',
-    description: "Discover the best cooking tricks, expert culinary hacks, and delicious recipes from around the world. Master your kitchen with CookeTricks.",
+    title: "CookeTricks - Recipes & Practical Cooking Guides",
+    description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
   },
   icons: {
     icon: "/favicon.ico",

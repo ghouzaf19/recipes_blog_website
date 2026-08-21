@@ -1,358 +1,91 @@
-import { sanityFetch } from '@/sanity/lib/fetch';
-import { notFound } from 'next/navigation';
-import { CustomPortableText } from '@/components/CustomPortableText';
+import type { Metadata } from 'next';
+import { draftMode } from 'next/headers';
 import Image from 'next/image';
-import { Metadata } from 'next';
-import Header from '@/components/Header';
 import Link from 'next/link';
-import { createClient } from 'next-sanity';
-import { urlFor } from '@/sanity/lib/image';
+import { notFound } from 'next/navigation';
+import Header from '@/components/Header';
+import { RecipeCard } from '@/components/RecipeCard';
+import { SafeHtml } from '@/components/SafeHtml';
+import { getAllPosts, getPostBySlug, safeJsonLd, SITE_URL, type BlogPost } from '@/lib/wordpress';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type SanityImageRef = { _ref: string; _type: string };
-type SanityAsset = { _ref: string; _type: string; url?: string };
-
-interface Post {
-  _id: string;
-  title: string;
-  slug: { current: string };
-  publishedAt: string;
-  excerpt?: string;
-  mainImage?: {
-    asset: SanityAsset;
-    alt?: string;
-    metadata?: { dimensions?: { width: number; height: number } };
-  };
-  body?: unknown[];
-  author?: { name: string; image?: { asset: SanityImageRef } };
-  cuisine?: string;
-  prepTime?: number;
-  cookTime?: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
-  servings?: number;
-  ingredients?: string[];
-  instructions?: string[];
-  seo?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    shareImage?: { asset?: { url: string } };
-    canonicalUrl?: string;
-  };
-}
-
-export const revalidate = 0;
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cooketricks.com';
-
-// ─── Static Params (pre-render all blog slugs for SEO) ────────────────────────
-
-const sitemapClient = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production',
-  apiVersion: '2024-03-01',
-  useCdn: true,
-});
+export const revalidate = 300;
 
 export async function generateStaticParams() {
-  const slugs: { slug: string }[] = await sitemapClient.fetch(
-    `*[_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))]{ "slug": slug.current }`
-  );
-  return slugs.map(({ slug }) => ({ slug }));
+  try { return (await getAllPosts()).map((post) => ({ slug: post.slug })); }
+  catch (error) { console.error('Static params could not load from WordPress:', error); return []; }
 }
 
-// ─── Data fetching ────────────────────────────────────────────────────────────
-
-async function getPost(slug: string): Promise<Post | null> {
-  return sanityFetch<Post | null>({
-    query: `*[_type == "post" && slug.current == $slug && !(_id in path('drafts.**'))][0] {
-      _id,
-      title,
-      slug,
-      publishedAt,
-      excerpt,
-      mainImage { asset, alt, metadata },
-      body,
-      author->{ name, image { asset } },
-      cuisine,
-      prepTime,
-      cookTime,
-      difficulty,
-      servings,
-      ingredients,
-      seo
-    }`,
-    params: { slug },
-    tags: ['post', `post:${slug}`],
-  });
+async function loadPost(slug: string): Promise<BlogPost | null> {
+  const preview = (await draftMode()).isEnabled;
+  return getPostBySlug(slug, preview);
 }
 
-// ─── SEO Metadata ─────────────────────────────────────────────────────────────
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const post = await loadPost(slug);
   if (!post) return { title: 'Page Not Found' };
-
-  const totalTime = (post.prepTime ?? 0) + (post.cookTime ?? 0);
-  const postImageUrl = post.seo?.shareImage?.asset?.url
-    ?? (post.mainImage ? urlFor(post.mainImage).url() : undefined);
-
+  const image = post.data.socialImage ?? post.data.featuredImage;
+  const title = post.data.seo.title || post.title;
+  const description = post.data.seo.description || post.excerpt || post.title;
+  const canonical = post.data.seo.canonicalUrl || `${SITE_URL}/blog/${post.slug}`;
   return {
-    title: post.seo?.metaTitle ?? `${post.title}${post.cuisine ? ` - ${post.cuisine} Recipe` : ' Recipe'}`,
-    description:
-      post.seo?.metaDescription ??
-      `${post.excerpt ?? post.title}. ${totalTime > 0 ? `Ready in ${totalTime} minutes. ` : ''}${post.servings ? `Serves ${post.servings}.` : ''}`.trim(),
-    openGraph: {
-      title: post.seo?.metaTitle ?? post.title,
-      description: post.seo?.metaDescription ?? post.excerpt ?? post.title,
-      url: `${SITE_URL}/blog/${post.slug.current}`,
-      type: 'article',
-      publishedTime: post.publishedAt,
-      authors: post.author?.name ? [post.author.name] : undefined,
-      images: postImageUrl
-        ? [{ url: postImageUrl, width: 1200, height: 630, alt: post.mainImage?.alt ?? post.title }]
-        : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.seo?.metaTitle ?? post.title,
-      description: post.seo?.metaDescription ?? post.excerpt ?? post.title,
-      images: postImageUrl ? [postImageUrl] : [],
-    },
-    alternates: {
-      canonical:
-        post.seo?.canonicalUrl ??
-        `${SITE_URL}/blog/${post.slug.current}`,
-    },
+    title, description, alternates: { canonical },
+    openGraph: { title, description, url: canonical, type: 'article', publishedTime: post.publishedAt, modifiedTime: post.modifiedAt, authors: post.data.author?.name ? [post.data.author.name] : undefined, images: image ? [{ url: image.url, width: image.width, height: image.height, alt: image.alt || post.title }] : [] },
+    twitter: { card: 'summary_large_image', title, description, images: image ? [image.url] : [] },
   };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+function minutes(value: number | null): string | undefined { return value ? `PT${value}M` : undefined; }
 
-
-function getFallbackImage(slug: string) {
-  const map: Record<string, string> = {
-    'chicken-tikka-masala': '/blog-images/chicken-tikka-masala.png',
-    'classic-french-onion-soup': '/blog-images/classic-french-onion-soup.png',
-    'classic-margherita-pizza': '/blog-images/classic-margherita-pizza.png',
-    'creamy-tuscan-chicken': '/blog-images/creamy-tuscan-chicken.png',
-    'easy-weeknight-beef-tacos': '/blog-images/easy-weeknight-beef-tacos.png',
-    'garlic-butter-shrimp-pasta': '/blog-images/garlic-butter-shrimp-pasta.png',
+function structuredData(post: BlogPost) {
+  const image = post.data.featuredImage;
+  const author = post.data.author ? { '@type': 'Person', name: post.data.author.name, url: `${SITE_URL}/authors/${post.data.author.slug}` } : undefined;
+  const common = { '@context': 'https://schema.org', headline: post.title, name: post.title, description: post.excerpt || post.title, url: `${SITE_URL}/blog/${post.slug}`, image: image ? [image.url] : undefined, author, datePublished: post.publishedAt, dateModified: post.modifiedAt, publisher: { '@type': 'Organization', name: 'CookeTricks', url: SITE_URL } };
+  if (post.data.contentType !== 'recipe') return { ...common, '@type': 'BlogPosting' };
+  const recipe = post.data.recipe;
+  return {
+    ...common, '@type': 'Recipe', prepTime: minutes(recipe.prepTime), cookTime: minutes(recipe.cookTime), totalTime: minutes(recipe.totalTime),
+    recipeYield: recipe.yield || (recipe.servings ? `${recipe.servings} servings` : undefined),
+    recipeCuisine: post.data.taxonomies.cuisines.map((term) => term.name).join(', ') || undefined,
+    recipeCategory: post.data.taxonomies.mealTypes.map((term) => term.name).join(', ') || undefined,
+    recipeIngredient: recipe.ingredients,
+    recipeInstructions: recipe.instructions.map((step) => ({ '@type': 'HowToStep', position: step.position, text: step.text })),
+    nutrition: recipe.nutritionVerified && recipe.nutrition ? { ...recipe.nutrition, '@type': 'NutritionInformation' } : undefined,
   };
-  return map[slug] || null;
 }
 
-function difficultyColor(d?: string) {
-  if (d === 'easy') return 'bg-green-100 text-green-800';
-  if (d === 'medium') return 'bg-yellow-100 text-yellow-800';
-  return 'bg-red-100 text-red-800';
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-export default async function BlogPost({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let post: Post | null = null;
-  let errorMsg: string | null = null;
-
-  try {
-    post = await getPost(slug);
-  } catch (err: unknown) {
-    const error = err as Error & { code?: string };
-    console.error("Sanity fetch failed:", error);
-    if (error.code === 'EAI_AGAIN' || error?.message?.includes('fetch failed')) {
-      errorMsg = "Network error: Unable to reach the database (Sanity API). Please check your internet connection.";
-    } else {
-      errorMsg = "An error occurred while loading the post.";
-    }
-  }
-
-  // Let the component fall through to the notFound() state gracefully instead of throwing a scary error.
-
+  let post: BlogPost | null = null;
+  try { post = await loadPost(slug); } catch (error) { console.error('WordPress post fetch failed:', error); }
   if (!post) notFound();
-
-  const totalTime = (post.prepTime ?? 0) + (post.cookTime ?? 0);
-
-  // ─── JSON-LD Structured Data (Recipe Schema) ──────────────────────────────
-  const postImage = post.mainImage?.asset?._ref
-    ? urlFor(post.mainImage).url()
-    : getFallbackImage(post.slug.current) ?? undefined;
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Recipe',
-    name: post.title,
-    description: post.excerpt ?? post.title,
-    ...(postImage && { image: [postImage] }),
-    ...(post.author?.name && { author: { '@type': 'Person', name: post.author.name } }),
-    ...(post.publishedAt && { datePublished: post.publishedAt }),
-    ...(post.prepTime && { prepTime: `PT${post.prepTime}M` }),
-    ...(post.cookTime && { cookTime: `PT${post.cookTime}M` }),
-    ...(totalTime > 0 && { totalTime: `PT${totalTime}M` }),
-    ...(post.servings && { recipeYield: `${post.servings} servings` }),
-    ...(post.cuisine && { recipeCuisine: post.cuisine }),
-    ...(post.difficulty && { keywords: post.difficulty }),
-    ...(post.ingredients && post.ingredients.length > 0 && {
-      recipeIngredient: post.ingredients,
-    }),
-    ...(post.instructions && post.instructions.length > 0 && {
-      recipeInstructions: post.instructions.map((step, i) => ({
-        '@type': 'HowToStep',
-        position: i + 1,
-        text: step,
-      })),
-    }),
-  };
-
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: 'Recipes', item: `${SITE_URL}/blog` },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/blog/${post.slug.current}` },
-    ],
-  };
+  const recipe = post.data.recipe;
+  const breadcrumb = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL }, { '@type': 'ListItem', position: 2, name: 'Recipes & Guides', item: `${SITE_URL}/blog` }, { '@type': 'ListItem', position: 3, name: post.title, item: `${SITE_URL}/blog/${post.slug}` }] };
 
   return (
     <>
-      {/* JSON-LD for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData(post)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumb) }} />
       <Header />
       <article className="w-full pb-20">
-        {/* Editorial Header */}
-        <header className="pt-16 pb-12 px-4 text-center max-w-4xl mx-auto">
-          <nav className="mb-8 flex justify-center" aria-label="Breadcrumb">
-            <Link href="/blog" className="text-primary hover:text-secondary font-medium text-sm tracking-widest uppercase transition-colors">
-              CookeTricks Recipes
-            </Link>
-          </nav>
-          
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif text-dark mb-6 leading-[1.1] tracking-tight">
-            {post.title}
-          </h1>
-
-          {post.excerpt && (
-            <p className="text-xl md:text-2xl font-light text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
-              {post.excerpt}
-            </p>
-          )}
-
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm tracking-widest uppercase font-medium text-gray-500">
-            {post.author?.name && (
-              <span className="text-gray-900">By {post.author.name}</span>
-            )}
-            {post.author?.name && <span className="text-accent">•</span>}
-            {post.publishedAt && (
-              <time dateTime={post.publishedAt}>
-                {new Date(post.publishedAt).toLocaleDateString(undefined, {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </time>
-            )}
+        <header className="mx-auto max-w-4xl px-4 pb-12 pt-16 text-center">
+          <nav className="mb-8" aria-label="Breadcrumb"><Link href="/blog" className="text-sm font-medium uppercase tracking-widest text-primary">CookeTricks</Link></nav>
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.25em] text-gray-500">{post.data.contentType === 'recipe' ? 'Recipe' : 'Cooking Guide'}</p>
+          <h1 className="mb-6 text-5xl leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">{post.title}</h1>
+          {post.excerpt && <p className="mx-auto mb-10 max-w-3xl text-xl font-light leading-relaxed text-gray-600 md:text-2xl">{post.excerpt}</p>}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+            {post.data.author && <Link className="text-gray-900 hover:text-primary" href={`/authors/${post.data.author.slug}`}>By {post.data.author.name}</Link>}
+            <time dateTime={post.publishedAt}>Published {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+            {Math.abs(Date.parse(post.modifiedAt) - Date.parse(post.publishedAt)) > 60_000 && <time dateTime={post.modifiedAt}>Updated {new Date(post.modifiedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>}
           </div>
         </header>
-
-        {/* Hero Image */}
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 mb-16">
-          {post.mainImage?.asset?._ref ? (
-            <div className="relative w-full aspect-[4/3] md:aspect-[16/9] rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src={urlFor(post.mainImage).url()}
-                alt={post.mainImage.alt ?? post.title}
-                fill
-                className="object-cover"
-                priority
-                unoptimized
-              />
-            </div>
-          ) : getFallbackImage(post.slug?.current) && (
-            <div className="relative w-full aspect-[4/3] md:aspect-[16/9] rounded-2xl overflow-hidden shadow-xl">
-              <Image
-                src={getFallbackImage(post.slug.current)!}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Content Column */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          {/* Intro Body */}
-          {post.body && post.body.length > 0 && (
-            <div className="prose prose-lg md:prose-xl prose-stone max-w-none mb-16 prose-headings:font-serif prose-headings:font-semibold prose-a:text-primary hover:prose-a:text-secondary">
-              <CustomPortableText value={post.body} />
-            </div>
-          )}
-
-          {/* Editorial Recipe Card */}
-          <div id="recipe-card" className="bg-white border border-accent p-8 md:p-12 shadow-sm rounded-lg relative mt-20">
-            {/* Decorative Top Line */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-1 bg-primary rounded-b-full"></div>
-            
-            <div className="text-center mb-10">
-              <h2 className="text-4xl font-serif text-dark mb-4">{post.title}</h2>
-              <div className="flex flex-wrap justify-center gap-6 text-sm uppercase tracking-widest text-gray-500 font-medium border-y border-gray-100 py-4">
-                {post.prepTime != null && <span>Prep: {post.prepTime} mins</span>}
-                {post.cookTime != null && <span>Cook: {post.cookTime} mins</span>}
-                {totalTime > 0 && <span className="text-primary font-bold">Total: {totalTime} mins</span>}
-                {post.servings != null && <span>Yield: {post.servings}</span>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {/* Ingredients */}
-              {post.ingredients && post.ingredients.length > 0 && (
-                <div>
-                  <h3 className="text-2xl font-serif text-dark border-b border-gray-200 pb-2 mb-6">Ingredients</h3>
-                  <ul className="space-y-3">
-                    {post.ingredients.map((ing, index) => (
-                      <li key={index} className="flex items-start text-base text-gray-700 leading-relaxed">
-                        <span className="text-primary mr-3">•</span>
-                        {ing}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Instructions */}
-              {post.instructions && post.instructions.length > 0 && (
-                <div>
-                  <h3 className="text-2xl font-serif text-dark border-b border-gray-200 pb-2 mb-6">Instructions</h3>
-                  <ol className="space-y-6">
-                    {post.instructions.map((step, index) => (
-                      <li key={index} className="text-base text-gray-700 leading-relaxed">
-                        <span className="block font-serif font-bold text-dark text-lg mb-1">Step {index + 1}</span>
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-            </div>
-          </div>
+        {post.data.featuredImage && <figure className="mx-auto mb-16 w-full max-w-4xl px-4 sm:px-6"><div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-xl md:aspect-[16/9]"><Image src={post.data.featuredImage.url} alt={post.data.featuredImage.alt || post.title} fill priority sizes="(max-width: 896px) 100vw, 896px" className="object-cover" /></div>{(post.data.transparency.imageCreator || post.data.featuredImage.caption) && <figcaption className="mt-3 text-center text-sm text-gray-500">{post.data.featuredImage.caption || `Image by ${post.data.transparency.imageCreator}`}</figcaption>}</figure>}
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          {post.contentHtml && <SafeHtml html={post.contentHtml} className="wp-content mb-16" />}
+          {post.data.contentType === 'recipe' && recipe.ingredientGroups.length > 0 && recipe.instructions.length > 0 && <RecipeCard title={post.title} servings={recipe.servings} yieldText={recipe.yield} groups={recipe.ingredientGroups} instructions={recipe.instructions} prepTime={recipe.prepTime} cookTime={recipe.cookTime} totalTime={recipe.totalTime} />}
+          {(recipe.testNotes || recipe.storageNotes || recipe.safetyNotes) && <section className="mt-12 space-y-6 rounded-2xl bg-white p-8"><h2 className="text-3xl">Tested notes</h2>{recipe.testNotes && <p>{recipe.testNotes}</p>}{recipe.storageNotes && <div><h3 className="mb-2 text-xl">Storage and reheating</h3><p>{recipe.storageNotes}</p></div>}{recipe.safetyNotes && <div><h3 className="mb-2 text-xl">Safety and allergens</h3><p>{recipe.safetyNotes}</p></div>}</section>}
+          {post.data.seo.sources.length > 0 && <section className="mt-12 border-t border-gray-200 pt-8"><h2 className="mb-4 text-2xl">Sources</h2><ul className="list-disc space-y-2 pl-6">{post.data.seo.sources.map((source) => <li key={source}><a href={source} rel="noreferrer noopener" className="break-all text-primary hover:underline">{source}</a></li>)}</ul></section>}
+          {post.data.transparency.aiDisclosure && <p className="mt-10 rounded-lg bg-gray-100 p-4 text-sm text-gray-600"><strong>Editorial disclosure:</strong> {post.data.transparency.aiDisclosure}</p>}
         </div>
       </article>
     </>

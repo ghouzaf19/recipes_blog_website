@@ -8,10 +8,7 @@ const nextConfig: NextConfig = {
   output: "standalone", // Required for Hostinger Node.js deployment
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.sanity.io",
-      },
+      { protocol: "https", hostname: "cms.cooketricks.com" },
       {
         protocol: "https",
         hostname: "image.pollinations.ai",

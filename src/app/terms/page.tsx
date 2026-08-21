@@ -16,12 +16,12 @@ export default function TermsPage() {
         
         <div className="prose prose-lg text-gray-700 leading-relaxed max-w-none">
           <p className="mb-6">
-            These Terms of Service constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you") and CookeTricks ("we," "us" or "our"), concerning your access to and use of the website as well as any other media form, media channel, mobile website or mobile application related, linked, or otherwise connected thereto.
+            These Terms of Service describe the agreement between you and CookeTricks concerning access to and use of this website and related services.
           </p>
           
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">Intellectual Property Rights</h2>
           <p className="mb-6">
-            Unless otherwise indicated, the Site is our proprietary property and all source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics on the Site (collectively, the "Content") and the trademarks, service marks, and logos contained therein (the "Marks") are owned or controlled by us or licensed to us, and are protected by copyright and trademark laws.
+            Unless otherwise indicated, the site and its original content are owned by or licensed to CookeTricks and may be protected by applicable intellectual-property laws.
           </p>
           
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">User Representations</h2>

@@ -2,41 +2,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star, ChevronRight, Search } from "lucide-react";
 import Header from "@/components/Header";
-import { sanityFetch } from "@/sanity/lib/fetch";
+import { getPosts, safeJsonLd, type BlogPost } from "@/lib/wordpress";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SanityAsset = { _ref: string };
-
-interface PostCard {
-  _id: string;
-  title: string;
-  slug: { current: string };
-  publishedAt?: string;
-  excerpt?: string;
-  mainImage?: { asset: SanityAsset; alt?: string };
-  prepTime?: number;
-  cookTime?: number;
-  difficulty?: "easy" | "medium" | "hard";
-  servings?: number;
-  cuisine?: string;
-  author?: { name: string; image?: { asset: SanityAsset } };
-}
+type PostCard = BlogPost;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export const revalidate = 0;
+export const revalidate = 300;
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "";
-const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-
-function imageUrl(assetRef: string, width = 800) {
-  const cleaned = assetRef
-    .replace("image-", "")
-    .replace(/-([a-z]+)$/, ".$1")
-    .replace(/-(\d+x\d+)-/, "-$1-");
-  return `https://cdn.sanity.io/images/${PROJECT_ID}/${DATASET}/${cleaned}?w=${width}&fit=crop&auto=format`;
-}
+function imageUrl(post: PostCard) { return post.data.featuredImage?.url; }
+function imageAlt(post: PostCard) { return post.data.featuredImage?.alt || post.title; }
+function cuisine(post: PostCard) { return post.data.taxonomies.cuisines[0]?.name; }
 
 function getFallbackImage(slug: string) {
   const map: Record<string, string> = {
@@ -51,11 +29,11 @@ function getFallbackImage(slug: string) {
 }
 
 const categories = [
-  { name: "Dinners", imgSrc: "/categories/dinners.png", href: "/blog?tag=dinners" },
-  { name: "Meals", imgSrc: "/categories/meals.png", href: "/blog?tag=meals" },
+  { name: "Dinners", imgSrc: "/categories/dinners.png", href: "/blog?mealType=dinner" },
+  { name: "Meals", imgSrc: "/categories/meals.png", href: "/blog" },
   { name: "Ingredients", imgSrc: "/categories/ingredients.png", href: "/blog?tag=ingredients" },
-  { name: "Occasions", imgSrc: "/categories/occasions.png", href: "/blog?tag=occasions" },
-  { name: "Cuisines", imgSrc: "/categories/cuisines.png", href: "/blog?tag=cuisines" },
+  { name: "Occasions", imgSrc: "/categories/occasions.png", href: "/blog?occasion=holidays" },
+  { name: "Cuisines", imgSrc: "/categories/cuisines.png", href: "/blog?cuisine=italian" },
   { name: "Kitchen Tips", imgSrc: "/categories/tips.png", href: "/blog?tag=kitchen-tips" },
 ];
 
@@ -63,7 +41,6 @@ const categories = [
 
 export default async function Home() {
   let posts: PostCard[] | null = null;
-  let errorMsg: string | null = null;
 
   let featuredPost: PostCard | null = null;
   let theLatest: PostCard[] = [];
@@ -72,15 +49,7 @@ export default async function Home() {
   let quickEasy: PostCard[] = [];
 
   try {
-    posts = await sanityFetch<PostCard[]>({
-      query: `*[_type == "post" && defined(slug.current) && !(_id in path('drafts.**'))] | order(publishedAt desc) [0..30] {
-        _id, title, slug, publishedAt, excerpt,
-        mainImage { asset, alt },
-        prepTime, cookTime, difficulty, servings, cuisine,
-        author->{ name, image { asset } }
-      }`,
-      tags: ["blog-index"],
-    });
+    posts = await getPosts({ perPage: 31 });
     
     if (posts) {
       featuredPost = posts[0] ?? null;
@@ -91,11 +60,9 @@ export default async function Home() {
     }
   } catch (err: unknown) {
     const error = err as Error & { code?: string };
-    console.error("Sanity fetch failed:", error);
+    console.error("WordPress fetch failed:", error);
     if (error.code === 'EAI_AGAIN' || error?.message?.includes('fetch failed')) {
-      errorMsg = "Network error: Unable to reach the database (Sanity API). Please check your internet connection.";
-    } else {
-      errorMsg = "An error occurred while loading posts.";
+      console.error("Network error: Unable to reach the WordPress API.");
     }
   }
 
@@ -119,7 +86,7 @@ export default async function Home() {
     <main className="flex min-h-screen flex-col bg-white font-sans text-gray-900">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
 
       <Header />
@@ -132,20 +99,20 @@ export default async function Home() {
           {/* Main Featured (approx 70%) */}
           <div className="lg:col-span-8 group">
             {featuredPost ? (
-              <Link href={`/blog/${featuredPost.slug.current}`} className="flex flex-col">
+              <Link href={`/blog/${featuredPost.slug}`} className="flex flex-col">
                 <div className="relative aspect-[3/2] w-full mb-5 bg-gray-100">
-                  {featuredPost.mainImage?.asset?._ref ? (
+                  {imageUrl(featuredPost) ? (
                     <Image
-                      src={imageUrl(featuredPost.mainImage.asset._ref, 900)}
-                      alt={featuredPost.mainImage.alt ?? featuredPost.title}
+                      src={imageUrl(featuredPost)!}
+                      alt={imageAlt(featuredPost)}
                       fill
                       priority
                       sizes="(max-width: 1024px) 100vw, 70vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                     />
-                  ) : getFallbackImage(featuredPost.slug.current) ? (
+                  ) : getFallbackImage(featuredPost.slug) ? (
                     <Image
-                      src={getFallbackImage(featuredPost.slug.current)!}
+                      src={getFallbackImage(featuredPost.slug)!}
                       alt={featuredPost.title}
                       fill
                       priority
@@ -160,7 +127,7 @@ export default async function Home() {
                 </div>
                 {/* Category Label */}
                 <p className="text-gray-500 font-bold uppercase tracking-wider text-xs mb-3">
-                  {featuredPost.cuisine || "Featured Recipe"}
+                  {cuisine(featuredPost) || (featuredPost.data.contentType === 'recipe' ? "Featured Recipe" : "Featured Guide")}
                 </p>
                 {/* Title (Serif) */}
                 <h1 className="text-4xl md:text-5xl font-medium text-gray-900 leading-tight mb-4 group-hover:text-[#1a73e8] transition-colors">
@@ -190,22 +157,22 @@ export default async function Home() {
               <div className="flex flex-col gap-6">
                 {theLatest.map((post) => (
                   <Link
-                    key={post._id}
-                    href={`/blog/${post.slug.current}`}
+                    key={post.id}
+                    href={`/blog/${post.slug}`}
                     className="group flex gap-4 items-center"
                   >
                     <div className="relative w-24 h-24 shrink-0 bg-gray-100 rounded-full md:rounded-none overflow-hidden">
-                      {post.mainImage?.asset?._ref ? (
+                      {imageUrl(post) ? (
                         <Image
-                          src={imageUrl(post.mainImage.asset._ref, 200)}
-                          alt={post.mainImage.alt ?? post.title}
+                          src={imageUrl(post)!}
+                          alt={imageAlt(post)}
                           fill
                           sizes="100px"
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                      ) : getFallbackImage(post.slug.current) && (
+                      ) : getFallbackImage(post.slug) && (
                         <Image
-                          src={getFallbackImage(post.slug.current)!}
+                          src={getFallbackImage(post.slug)!}
                           alt={post.title}
                           fill
                           sizes="100px"
@@ -215,7 +182,7 @@ export default async function Home() {
                     </div>
                     <div>
                       <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">
-                        {post.cuisine || "Recipe"}
+                        {cuisine(post) || (post.data.contentType === 'recipe' ? "Recipe" : "Guide")}
                       </p>
                       <h3 className="font-medium text-base text-gray-900 group-hover:text-[#1a73e8] leading-snug line-clamp-2 transition-colors">
                         {post.title}
@@ -235,7 +202,7 @@ export default async function Home() {
               What are you craving?
             </h2>
             <p className="text-gray-600 mb-8 max-w-xl mx-auto text-lg">
-              Search over 500+ tested recipes to find exactly what you're looking for, from quick dinners to elaborate desserts.
+              Search our growing collection of recipes and practical cooking guides.
             </p>
             <form action="/blog" method="GET" className="max-w-2xl mx-auto relative flex items-center">
               <Search className="w-6 h-6 text-gray-400 absolute left-6 pointer-events-none" />
@@ -273,22 +240,22 @@ export default async function Home() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
               {trendingPosts.map((post) => (
                 <Link
-                  key={post._id}
-                  href={`/blog/${post.slug.current}`}
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
                   className="group flex flex-col"
                 >
                   <div className="relative aspect-[3/2] w-full mb-3 bg-gray-100 overflow-hidden">
-                    {post.mainImage?.asset?._ref ? (
+                    {imageUrl(post) ? (
                       <Image
-                        src={imageUrl(post.mainImage.asset._ref, 400)}
-                        alt={post.mainImage.alt ?? post.title}
+                        src={imageUrl(post)!}
+                        alt={imageAlt(post)}
                         fill
                         sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    ) : getFallbackImage(post.slug.current) && (
+                    ) : getFallbackImage(post.slug) && (
                       <Image
-                        src={getFallbackImage(post.slug.current)!}
+                        src={getFallbackImage(post.slug)!}
                         alt={post.title}
                         fill
                         sizes="(max-width: 640px) 50vw, 25vw"
@@ -297,7 +264,7 @@ export default async function Home() {
                     )}
                   </div>
                   <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">
-                    {post.cuisine || "Recipe"}
+                    {cuisine(post) || (post.data.contentType === 'recipe' ? "Recipe" : "Guide")}
                   </p>
                   <h3 className="font-medium text-gray-900 group-hover:text-[#1a73e8] text-lg leading-snug line-clamp-2 mb-2 transition-colors">
                     {post.title}
@@ -329,12 +296,12 @@ export default async function Home() {
               </div>
             </div>
             <div className="w-full lg:w-1/2 flex flex-col justify-center text-center lg:text-left lg:pl-8">
-              <span className="text-[#F06D06] font-bold tracking-widest uppercase text-sm mb-4 block">Reader Favorite</span>
+              <span className="text-[#F06D06] font-bold tracking-widest uppercase text-sm mb-4 block">Cooking inspiration</span>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6 leading-tight">
-                The Best Weekend Pancakes
+                Recipes worth exploring
               </h2>
               <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                This homemade recipe has been our most popular post for over three years! Made from simple pantry ingredients, it yields the most incredibly fluffy, buttery, and golden results every single time. It's the perfect reason to wake up early on a Sunday.
+                Browse practical recipes and cooking guides, with ingredients, instructions, timing, and useful notes kept together in one clear place.
               </p>
               <div className="flex justify-center lg:justify-start">
                 <Link 
@@ -376,22 +343,22 @@ export default async function Home() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
               {sweetTreats.map((post) => (
                 <Link
-                  key={post._id}
-                  href={`/blog/${post.slug.current}`}
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
                   className="group flex flex-col"
                 >
                   <div className="relative aspect-square w-full mb-3 bg-amber-100 rounded-2xl overflow-hidden shadow-sm">
-                    {post.mainImage?.asset?._ref ? (
+                    {imageUrl(post) ? (
                       <Image
-                        src={imageUrl(post.mainImage.asset._ref, 400)}
-                        alt={post.mainImage.alt ?? post.title}
+                        src={imageUrl(post)!}
+                        alt={imageAlt(post)}
                         fill
                         sizes="(max-width: 640px) 50vw, 25vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
-                    ) : getFallbackImage(post.slug.current) && (
+                    ) : getFallbackImage(post.slug) && (
                       <Image
-                        src={getFallbackImage(post.slug.current)!}
+                        src={getFallbackImage(post.slug)!}
                         alt={post.title}
                         fill
                         sizes="(max-width: 640px) 50vw, 25vw"
@@ -418,7 +385,7 @@ export default async function Home() {
             <div className="w-full md:w-1/2 relative min-h-[400px]">
               <Image 
                 src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&w=1000&auto=format&fit=crop"
-                alt="Chef Cooke in the kitchen"
+                alt="Cook working in a kitchen"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -426,18 +393,18 @@ export default async function Home() {
               />
             </div>
             <div className="w-full md:w-1/2 p-10 md:p-14 lg:p-20 flex flex-col justify-center text-white">
-              <h2 className="text-sm font-bold tracking-widest uppercase mb-3 text-blue-200">Meet The Editor</h2>
-              <h3 className="font-serif text-4xl md:text-5xl font-bold mb-6 leading-tight">I believe that anyone can cook like a pro.</h3>
+              <h2 className="text-sm font-bold tracking-widest uppercase mb-3 text-blue-200">About CookeTricks</h2>
+              <h3 className="font-serif text-4xl md:text-5xl font-bold mb-6 leading-tight">Make everyday cooking easier.</h3>
               <p className="text-blue-100 text-lg mb-8 leading-relaxed">
-                Hi, I'm Alex. After spending 10 years in professional kitchens across Europe, I realized that the best cooking secrets aren't complicated—they're just not widely shared. I created CookeTricks to bring restaurant-quality techniques into your everyday home cooking. 
+                CookeTricks brings recipes, techniques, and practical kitchen notes into a format that is easy to follow. Each article clearly identifies its author and review dates.
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden relative bg-white">
                   <Image src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=200&auto=format&fit=crop" fill className="object-cover" alt="Author" unoptimized />
                 </div>
                 <div>
-                  <p className="font-bold">Alex Cooke</p>
-                  <p className="text-blue-200 text-sm">Founder & Head Chef</p>
+                  <p className="font-bold">CookeTricks Editorial</p>
+                  <p className="text-blue-200 text-sm">Recipe and cooking guides</p>
                 </div>
               </div>
             </div>
@@ -493,7 +460,7 @@ export default async function Home() {
                 Get our best recipes delivered to your inbox.
               </h2>
               <p className="text-lg text-gray-600 mb-10 leading-relaxed">
-                Join 50,000+ home cooks who receive our weekly newsletter packed with seasonal recipes, pro kitchen hacks, and exclusive content you won't find on the blog.
+                Receive seasonal recipes, practical kitchen ideas, and new articles from CookeTricks.
               </p>
               
               <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" action="#">
@@ -533,22 +500,22 @@ export default async function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {quickEasy.map((post) => (
                 <Link
-                  key={post._id}
-                  href={`/blog/${post.slug.current}`}
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
                   className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
                 >
                   <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
-                    {post.mainImage?.asset?._ref ? (
+                    {imageUrl(post) ? (
                       <Image
-                        src={imageUrl(post.mainImage.asset._ref, 400)}
-                        alt={post.mainImage.alt ?? post.title}
+                        src={imageUrl(post)!}
+                        alt={imageAlt(post)}
                         fill
                         sizes="(max-width: 768px) 100vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    ) : getFallbackImage(post.slug.current) && (
+                    ) : getFallbackImage(post.slug) && (
                       <Image
-                        src={getFallbackImage(post.slug.current)!}
+                        src={getFallbackImage(post.slug)!}
                         alt={post.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 25vw"
@@ -556,12 +523,12 @@ export default async function Home() {
                       />
                     )}
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-gray-900 flex items-center gap-1 shadow-sm">
-                      ⏱️ {post.prepTime ? (post.prepTime + (post.cookTime || 0)) : 30} mins
+                      {post.data.recipe.totalTime ? `⏱️ ${post.data.recipe.totalTime} mins` : 'Cooking guide'}
                     </div>
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-2">
-                      {post.cuisine || "Everyday"}
+                      {cuisine(post) || "Everyday"}
                     </p>
                     <h3 className="font-medium text-gray-900 group-hover:text-primary text-xl leading-snug line-clamp-2 mb-3 transition-colors">
                       {post.title}

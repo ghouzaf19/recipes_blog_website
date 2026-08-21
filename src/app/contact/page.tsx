@@ -15,7 +15,7 @@ export default function ContactPage() {
         
         <div className="prose prose-lg text-gray-700 leading-relaxed max-w-none mb-12">
           <p>
-            Have a question, a recipe request, or just want to say hello? We'd love to hear from you! Reach out to us using the information below.
+            Have a question, a recipe request, or want to say hello? We would love to hear from you. Reach out using the information below.
           </p>
         </div>
 

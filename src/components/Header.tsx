@@ -7,7 +7,7 @@ import { Search, Menu, ChevronDown, Utensils, X } from "lucide-react";
 const navItems = [
   {
     name: "Dinners",
-    href: "/blog?category=dinners",
+    href: "/blog?mealType=dinner",
     items: [
       { label: "Quick Dinners", href: "/blog?tag=quick-dinners" },
       { label: "Healthy Dinners", href: "/blog?tag=healthy-dinners" },
@@ -16,12 +16,12 @@ const navItems = [
   },
   {
     name: "Meals",
-    href: "/blog?category=meals",
+    href: "/blog",
     items: [
-      { label: "Breakfast", href: "/blog?tag=breakfast" },
-      { label: "Lunch", href: "/blog?tag=lunch" },
-      { label: "Appetizers", href: "/blog?tag=appetizers" },
-      { label: "Soups", href: "/blog?tag=soups" },
+      { label: "Breakfast", href: "/blog?mealType=breakfast" },
+      { label: "Lunch", href: "/blog?mealType=lunch" },
+      { label: "Appetizers", href: "/blog?mealType=appetizers" },
+      { label: "Soups", href: "/blog?mealType=soups" },
     ],
   },
   {
@@ -31,26 +31,26 @@ const navItems = [
       { label: "Chicken", href: "/blog?tag=chicken" },
       { label: "Beef", href: "/blog?tag=beef" },
       { label: "Seafood", href: "/blog?tag=seafood" },
-      { label: "Vegetarian", href: "/blog?tag=vegetarian" },
+      { label: "Vegetarian", href: "/blog?diet=vegetarian" },
     ],
   },
   {
     name: "Occasions",
-    href: "/blog?category=occasions",
+    href: "/blog",
     items: [
-      { label: "Holidays", href: "/blog?tag=holidays" },
-      { label: "Party Recipes", href: "/blog?tag=party" },
-      { label: "Date Night", href: "/blog?tag=date-night" },
+      { label: "Holidays", href: "/blog?occasion=holidays" },
+      { label: "Party Recipes", href: "/blog?occasion=party-recipes" },
+      { label: "Date Night", href: "/blog?occasion=date-night" },
     ],
   },
   {
     name: "Cuisines",
-    href: "/blog?category=cuisines",
+    href: "/blog",
     items: [
-      { label: "Italian", href: "/blog?cuisine=Italian" },
-      { label: "Mexican", href: "/blog?cuisine=Mexican" },
-      { label: "Asian", href: "/blog?cuisine=Asian" },
-      { label: "Indian", href: "/blog?cuisine=Indian" },
+      { label: "Italian", href: "/blog?cuisine=italian" },
+      { label: "Mexican", href: "/blog?cuisine=mexican" },
+      { label: "Asian", href: "/blog?cuisine=asian" },
+      { label: "Indian", href: "/blog?cuisine=indian" },
     ],
   },
   {

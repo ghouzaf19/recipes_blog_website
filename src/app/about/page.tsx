@@ -20,12 +20,12 @@ export default function AboutPage() {
           
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">Our Story</h2>
           <p className="mb-6">
-            CookeTricks was born out of a simple idea: that cooking shouldn't be intimidating. We believe that with the right tricks up your sleeve, anyone can create restaurant-quality meals at home. What started as a small collection of kitchen hacks has grown into a comprehensive platform dedicated to the art and science of cooking.
+            CookeTricks was born out of a simple idea: cooking should not be intimidating. With clear instructions and useful context, home cooks can approach new dishes with more confidence.
           </p>
           
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">What We Do</h2>
           <p className="mb-6">
-            We scour the culinary world for the best techniques, test them rigorously in our own kitchens, and share them with you. Whether it's a 15-minute weeknight dinner or an impressive holiday feast, our recipes are designed to be foolproof and flavor-packed.
+            We publish recipes and cooking guides with clear authorship, dates, ingredients, instructions, and practical notes. When a recipe has been tested, its recipe card identifies the test information provided by the editor.
           </p>
           
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">Join Our Community</h2>
