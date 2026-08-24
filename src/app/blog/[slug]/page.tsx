@@ -9,7 +9,6 @@ import { RecipeCard } from '@/components/RecipeCard';
 import { SafeHtml } from '@/components/SafeHtml';
 
 import {
-  getAllPosts,
   getPostBySlug,
   getPreviewPostById,
   safeJsonLd,
@@ -29,59 +28,34 @@ type PageSearchParams = Promise<{
   preview_token?: string;
 }>;
 
-type PageProps = {
-  params: PageParams;
-  searchParams: PageSearchParams;
-};
-
-type LoadedPost = {
+interface LoadedPost {
   post: BlogPost | null;
   isPreview: boolean;
-};
-
-export async function generateStaticParams() {
-  try {
-    const posts = await getAllPosts();
-
-    return posts.map((post) => ({
-      slug: post.slug,
-    }));
-  } catch (error) {
-    console.error(
-      'Static params could not load from WordPress:',
-      error
-    );
-
-    return [];
-  }
 }
 
 /**
- * Loads either:
- * - A normal published WordPress post.
- * - An authenticated WordPress draft preview.
+ * Public requests only load published WordPress posts.
  *
- * Drafts are only returned when:
- * 1. Next.js draft mode is enabled.
- * 2. A valid numeric preview ID is supplied.
- * 3. The preview token is valid.
+ * Drafts are returned only when:
+ * 1. Preview parameters are present.
+ * 2. Next.js Draft Mode is enabled.
+ * 3. The preview ID is valid.
+ * 4. The signed preview token is valid.
  */
 async function loadPost(
   slug: string,
   previewIdValue?: string,
-  previewTokenValue?: string
+  previewTokenValue?: string,
 ): Promise<LoadedPost> {
-  
-
   const previewRequested =
     previewIdValue !== undefined ||
     previewTokenValue !== undefined;
 
   /*
-   * Normal public request:
-   * Never ask WordPress for draft content.
+   * Normal public request.
+   * Never request draft content from WordPress.
    */
-if (!previewRequested) {
+  if (!previewRequested) {
     const post = await getPostBySlug(slug, false);
 
     return {
@@ -89,19 +63,20 @@ if (!previewRequested) {
       isPreview: false,
     };
   }
-const previewModeEnabled =
-  (await draftMode()).isEnabled;
 
-if (!previewModeEnabled) {
-  console.warn(
-    'Rejected WordPress preview request because draft mode is disabled.'
-  );
+  /*
+   * Preview parameters exist, so Draft Mode must also
+   * have been enabled by /api/preview.
+   */
+  const previewModeEnabled = (await draftMode()).isEnabled;
 
-  return {
-    post: null,
-    isPreview: true,
-  };
-}
+  if (!previewModeEnabled) {
+    return {
+      post: null,
+      isPreview: true,
+    };
+  }
+
   const previewId = Number(previewIdValue);
   const previewToken = previewTokenValue ?? '';
 
@@ -110,17 +85,7 @@ if (!previewModeEnabled) {
     previewId > 0 &&
     validPreviewToken(previewId, previewToken);
 
-  /*
-   * Never fall back to a draft-by-slug request when the
-   * preview token is missing or invalid.
-   */
   if (!previewIsValid) {
-    console.warn('Rejected invalid WordPress preview request.', {
-      previewId: Number.isFinite(previewId)
-        ? previewId
-        : null,
-    });
-
     return {
       post: null,
       isPreview: true,
@@ -128,6 +93,17 @@ if (!previewModeEnabled) {
   }
 
   const post = await getPreviewPostById(previewId);
+
+  /*
+   * Prevent a valid preview token for one post from being
+   * reused with an unrelated slug.
+   */
+  if (post && post.slug !== slug) {
+    return {
+      post: null,
+      isPreview: true,
+    };
+  }
 
   return {
     post,
@@ -138,102 +114,25 @@ if (!previewModeEnabled) {
 export async function generateMetadata({
   params,
   searchParams,
-}: PageProps): Promise<Metadata> {
+}: {
+  params: PageParams;
+  searchParams: PageSearchParams;
+}): Promise<Metadata> {
   const { slug } = await params;
-  const { preview_id, preview_token } =
-    await searchParams;
+  const { preview_id, preview_token } = await searchParams;
+
+  let loaded: LoadedPost;
 
   try {
-    const { post, isPreview } = await loadPost(
+    loaded = await loadPost(
       slug,
       preview_id,
-      preview_token
+      preview_token,
     );
-
-    if (!post) {
-      return {
-        title: 'Page Not Found',
-        robots: {
-          index: false,
-          follow: false,
-        },
-      };
-    }
-
-    const image =
-      post.data.socialImage ??
-      post.data.featuredImage;
-
-    const title =
-      post.data.seo.title || post.title;
-
-    const description =
-      post.data.seo.description ||
-      post.excerpt ||
-      post.title;
-
-    const canonical =
-      post.data.seo.canonicalUrl ||
-      `${SITE_URL}/blog/${post.slug}`;
-
-    return {
-      title,
-      description,
-
-      alternates: {
-        canonical,
-      },
-
-      robots: isPreview
-        ? {
-            index: false,
-            follow: false,
-            noarchive: true,
-            nosnippet: true,
-            noimageindex: true,
-          }
-        : undefined,
-
-      openGraph: {
-        title,
-        description,
-        url: canonical,
-        type: 'article',
-
-        ...(isPreview
-          ? {}
-          : {
-              publishedTime: post.publishedAt,
-              modifiedTime: post.modifiedAt,
-            }),
-
-        authors: post.data.author?.name
-          ? [post.data.author.name]
-          : undefined,
-
-        images: image
-          ? [
-              {
-                url: image.url,
-                width: image.width,
-                height: image.height,
-                alt: image.alt || post.title,
-              },
-            ]
-          : [],
-      },
-
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: image ? [image.url] : [],
-      },
-    };
   } catch (error) {
     console.error(
       'WordPress metadata fetch failed:',
-      error
+      error,
     );
 
     return {
@@ -244,20 +143,93 @@ export async function generateMetadata({
       },
     };
   }
+
+  const { post, isPreview } = loaded;
+
+  if (!post) {
+    return {
+      title: 'Page Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const image =
+    post.data.socialImage ??
+    post.data.featuredImage;
+
+  const title =
+    post.data.seo.title ||
+    post.title;
+
+  const description =
+    post.data.seo.description ||
+    post.excerpt ||
+    post.title;
+
+  const canonical =
+    post.data.seo.canonicalUrl ||
+    `${SITE_URL}/blog/${post.slug}`;
+
+  return {
+    title,
+    description,
+
+    alternates: {
+      canonical,
+    },
+
+    robots: isPreview
+      ? {
+          index: false,
+          follow: false,
+          noarchive: true,
+          nosnippet: true,
+          noimageindex: true,
+        }
+      : undefined,
+
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: 'article',
+      publishedTime: post.publishedAt,
+      modifiedTime: post.modifiedAt,
+
+      authors: post.data.author?.name
+        ? [post.data.author.name]
+        : undefined,
+
+      images: image
+        ? [
+            {
+              url: image.url,
+              width: image.width,
+              height: image.height,
+              alt: image.alt || post.title,
+            },
+          ]
+        : [],
+    },
+
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: image ? [image.url] : [],
+    },
+  };
 }
 
 function minutes(
-  value: number | null
+  value: number | null,
 ): string | undefined {
-  if (
-    value === null ||
-    !Number.isFinite(value) ||
-    value <= 0
-  ) {
-    return undefined;
-  }
-
-  return `PT${value}M`;
+  return value && value > 0
+    ? `PT${value}M`
+    : undefined;
 }
 
 function structuredData(post: BlogPost) {
@@ -275,15 +247,13 @@ function structuredData(post: BlogPost) {
     '@context': 'https://schema.org',
     headline: post.title,
     name: post.title,
-    description:
-      post.data.seo.description ||
-      post.excerpt ||
-      post.title,
+    description: post.excerpt || post.title,
     url: `${SITE_URL}/blog/${post.slug}`,
     image: image ? [image.url] : undefined,
     author,
     datePublished: post.publishedAt,
     dateModified: post.modifiedAt,
+
     publisher: {
       '@type': 'Organization',
       name: 'CookeTricks',
@@ -324,19 +294,14 @@ function structuredData(post: BlogPost) {
         .map((term) => term.name)
         .join(', ') || undefined,
 
-    recipeIngredient:
-      recipe.ingredients.length > 0
-        ? recipe.ingredients
-        : undefined,
+    recipeIngredient: recipe.ingredients,
 
     recipeInstructions:
-      recipe.instructions.length > 0
-        ? recipe.instructions.map((step) => ({
-            '@type': 'HowToStep',
-            position: step.position,
-            text: step.text,
-          }))
-        : undefined,
+      recipe.instructions.map((step) => ({
+        '@type': 'HowToStep',
+        position: step.position,
+        text: step.text,
+      })),
 
     nutrition:
       recipe.nutritionVerified &&
@@ -349,33 +314,49 @@ function structuredData(post: BlogPost) {
   };
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export default async function BlogPostPage({
   params,
   searchParams,
-}: PageProps) {
+}: {
+  params: PageParams;
+  searchParams: PageSearchParams;
+}) {
   const { slug } = await params;
   const { preview_id, preview_token } =
     await searchParams;
 
-  let loadedPost: LoadedPost = {
-    post: null,
-    isPreview: false,
-  };
+  let loaded: LoadedPost;
 
   try {
-    loadedPost = await loadPost(
+    loaded = await loadPost(
       slug,
       preview_id,
-      preview_token
+      preview_token,
     );
   } catch (error) {
     console.error(
       'WordPress post fetch failed:',
-      error
+      error,
     );
+
+    notFound();
   }
 
-  const { post, isPreview } = loadedPost;
+  const { post, isPreview } = loaded;
 
   if (!post) {
     notFound();
@@ -383,19 +364,28 @@ export default async function BlogPostPage({
 
   const recipe = post.data.recipe;
 
-  const hasRecipeCard =
+  const showRecipeCard =
     post.data.contentType === 'recipe' &&
     recipe.ingredientGroups.length > 0 &&
     recipe.instructions.length > 0;
 
-  const hasRecipeNotes =
+  const hasTestedNotes =
     Boolean(recipe.testNotes) ||
     Boolean(recipe.storageNotes) ||
     Boolean(recipe.safetyNotes);
 
+  const wasUpdated =
+    Number.isFinite(Date.parse(post.modifiedAt)) &&
+    Number.isFinite(Date.parse(post.publishedAt)) &&
+    Math.abs(
+      Date.parse(post.modifiedAt) -
+        Date.parse(post.publishedAt),
+    ) > 60_000;
+
   const breadcrumb = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
+
     itemListElement: [
       {
         '@type': 'ListItem',
@@ -421,8 +411,8 @@ export default async function BlogPostPage({
   return (
     <>
       {/*
-       * Draft previews must not output public Recipe or
-       * BlogPosting structured data.
+       * Do not expose Recipe or Article structured data
+       * for unpublished WordPress previews.
        */}
       {!isPreview && (
         <>
@@ -430,7 +420,7 @@ export default async function BlogPostPage({
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: safeJsonLd(
-                structuredData(post)
+                structuredData(post),
               ),
             }}
           />
@@ -488,46 +478,46 @@ export default async function BlogPostPage({
 
             {isPreview ? (
               <span className="font-bold text-primary">
-                Draft Preview
+                Draft preview
               </span>
             ) : (
               <>
                 <time dateTime={post.publishedAt}>
-                  Published{' '}
-                  {new Date(
-                    post.publishedAt
-                  ).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  Published {formatDate(post.publishedAt)}
                 </time>
 
-                {Math.abs(
-                  Date.parse(post.modifiedAt) -
-                    Date.parse(post.publishedAt)
-                ) > 60_000 && (
+                {wasUpdated && (
                   <time dateTime={post.modifiedAt}>
-                    Updated{' '}
-                    {new Date(
-                      post.modifiedAt
-                    ).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                    Updated {formatDate(post.modifiedAt)}
                   </time>
                 )}
               </>
             )}
           </div>
+
+          {isPreview && (
+            <div
+              role="status"
+              className="mx-auto mt-10 max-w-3xl rounded-xl border border-amber-300 bg-amber-50 p-5 text-left text-base leading-relaxed text-amber-950"
+            >
+              <strong>
+                ⚠️ Editorial draft — needs testing.
+              </strong>{' '}
+              Do not publish until ingredient
+              quantities, cooking times, yield,
+              flavor, photos and nutrition have been
+              verified.
+            </div>
+          )}
         </header>
 
         {post.data.featuredImage && (
           <figure className="mx-auto mb-16 w-full max-w-4xl px-4 sm:px-6">
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-xl md:aspect-[16/9]">
               <Image
-                src={post.data.featuredImage.url}
+                src={
+                  post.data.featuredImage.url
+                }
                 alt={
                   post.data.featuredImage.alt ||
                   post.title
@@ -543,8 +533,7 @@ export default async function BlogPostPage({
               .imageCreator ||
               post.data.featuredImage.caption) && (
               <figcaption className="mt-3 text-center text-sm text-gray-500">
-                {post.data.featuredImage
-                  .caption ||
+                {post.data.featuredImage.caption ||
                   `Image by ${post.data.transparency.imageCreator}`}
               </figcaption>
             )}
@@ -559,7 +548,7 @@ export default async function BlogPostPage({
             />
           )}
 
-          {hasRecipeCard && (
+          {showRecipeCard && (
             <RecipeCard
               title={post.title}
               servings={recipe.servings}
@@ -572,12 +561,10 @@ export default async function BlogPostPage({
             />
           )}
 
-          {hasRecipeNotes && (
+          {hasTestedNotes && (
             <section className="mt-12 space-y-6 rounded-2xl bg-white p-8">
               <h2 className="text-3xl">
-                {isPreview
-                  ? 'Draft testing notes'
-                  : 'Recipe notes'}
+                Tested notes
               </h2>
 
               {recipe.testNotes && (
@@ -589,6 +576,7 @@ export default async function BlogPostPage({
                   <h3 className="mb-2 text-xl">
                     Storage and reheating
                   </h3>
+
                   <p>{recipe.storageNotes}</p>
                 </div>
               )}
@@ -598,6 +586,7 @@ export default async function BlogPostPage({
                   <h3 className="mb-2 text-xl">
                     Safety and allergens
                   </h3>
+
                   <p>{recipe.safetyNotes}</p>
                 </div>
               )}
@@ -623,14 +612,13 @@ export default async function BlogPostPage({
                         {source}
                       </a>
                     </li>
-                  )
+                  ),
                 )}
               </ul>
             </section>
           )}
 
-          {post.data.transparency
-            .aiDisclosure && (
+          {post.data.transparency.aiDisclosure && (
             <p className="mt-10 rounded-lg bg-gray-100 p-4 text-sm text-gray-600">
               <strong>
                 Editorial disclosure:
