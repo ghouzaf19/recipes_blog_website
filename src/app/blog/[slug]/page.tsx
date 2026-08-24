@@ -71,7 +71,7 @@ async function loadPost(
   previewIdValue?: string,
   previewTokenValue?: string
 ): Promise<LoadedPost> {
-  const previewModeEnabled = (await draftMode()).isEnabled;
+  
 
   const previewRequested =
     previewIdValue !== undefined ||
@@ -81,7 +81,7 @@ async function loadPost(
    * Normal public request:
    * Never ask WordPress for draft content.
    */
-  if (!previewModeEnabled || !previewRequested) {
+if (!previewRequested) {
     const post = await getPostBySlug(slug, false);
 
     return {
@@ -89,7 +89,19 @@ async function loadPost(
       isPreview: false,
     };
   }
+const previewModeEnabled =
+  (await draftMode()).isEnabled;
 
+if (!previewModeEnabled) {
+  console.warn(
+    'Rejected WordPress preview request because draft mode is disabled.'
+  );
+
+  return {
+    post: null,
+    isPreview: true,
+  };
+}
   const previewId = Number(previewIdValue);
   const previewToken = previewTokenValue ?? '';
 
