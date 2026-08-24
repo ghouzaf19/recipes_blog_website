@@ -98,12 +98,16 @@ async function loadPost(
    * Prevent a valid preview token for one post from being
    * reused with an unrelated slug.
    */
-  if (post && post.slug !== slug) {
-    return {
-      post: null,
-      isPreview: true,
-    };
-  }
+ if (
+  post &&
+  slug !== 'preview' &&
+  post.slug !== slug
+) {
+  return {
+    post: null,
+    isPreview: true,
+  };
+}
 
   return {
     post,
