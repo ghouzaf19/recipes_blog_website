@@ -1,45 +1,102 @@
-import Link from "next/link";
-import { Utensils } from "lucide-react";
+import Link from 'next/link';
+import { Utensils } from 'lucide-react';
+
+const recipeLinks = [
+  {
+    label: 'Dinners',
+    href: '/blog?mealType=dinner',
+  },
+  {
+    label: 'Breakfast',
+    href: '/blog?mealType=breakfast',
+  },
+  {
+    label: 'Vegetarian',
+    href: '/blog?diet=vegetarian',
+  },
+  {
+    label: 'Holidays',
+    href: '/blog?occasion=holidays',
+  },
+];
+
+const informationLinks = [
+  {
+    label: 'About Us',
+    href: '/about',
+  },
+  {
+    label: 'Editorial Team',
+    href: '/authors/cooke-tricks-editorial',
+  },
+  {
+    label: 'Editorial Policy',
+    href: '/editorial-policy',
+  },
+  {
+    label: 'Contact',
+    href: '/contact',
+  },
+  {
+    label: 'Privacy Policy',
+    href: '/privacy',
+  },
+  {
+    label: 'Terms of Service',
+    href: '/terms',
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 pt-16 pb-8 mt-auto border-t border-gray-200 w-full shrink-0">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="flex flex-col lg:flex-row justify-between mb-12 border-b border-gray-200 pb-12 gap-8">
+    <footer className="mt-auto w-full shrink-0 border-t border-gray-200 bg-gray-50 pb-8 pt-16">
+      <div className="mx-auto w-full max-w-[1240px] px-4 sm:px-6 lg:px-8">
+        <div className="mb-12 flex flex-col justify-between gap-8 border-b border-gray-200 pb-12 lg:flex-row">
           {/* Brand */}
           <div className="lg:w-1/3">
-            <Link href="/" className="flex items-center gap-2 mb-6">
-              <div className="bg-primary p-2 rounded-full hidden sm:block">
-                <Utensils className="w-6 h-6 text-white" />
+            <Link
+              href="/"
+              className="mb-6 flex items-center gap-2"
+            >
+              <div className="hidden rounded-full bg-primary p-2 sm:block">
+                <Utensils className="h-6 w-6 text-white" />
               </div>
-              <span className="font-serif text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
-                Cooke<span className="text-primary tracking-tighter">Tricks</span>
+
+              <span className="font-serif text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                Cooke
+                <span className="tracking-tighter text-primary">
+                  Tricks
+                </span>
               </span>
             </Link>
-            <p className="text-gray-600 mb-4 text-sm leading-relaxed border-l-4 border-primary pl-3">
-              Everyday cooking hacks and recipes that actually work, tested by real home cooks. 
-              Focus on the food, not the fuss.
+
+            <p className="mb-4 border-l-4 border-primary pl-3 text-sm leading-relaxed text-gray-600">
+              Practical recipes and cooking guides for
+              busy home cooks. Clear instructions,
+              useful kitchen tips and transparent
+              editorial standards.
             </p>
           </div>
 
           {/* Links */}
           <nav
             aria-label="Footer navigation"
-            className="grid grid-cols-2 gap-8 lg:w-1/2 text-sm font-semibold text-gray-900 uppercase tracking-wider leading-loose"
+            className="grid grid-cols-2 gap-8 text-sm font-semibold uppercase leading-loose tracking-wider text-gray-900 lg:w-1/2"
           >
             <div>
-              <p className="text-gray-900 font-bold mb-4">Recipes</p>
-              <ul className="text-gray-600 font-normal normal-case tracking-normal">
-                {[
-                  { label: "Dinners", href: "/blog?mealType=dinner" },
-                  { label: "Breakfast", href: "/blog?mealType=breakfast" },
-                  { label: "Vegetarian", href: "/blog?diet=vegetarian" },
-                  { label: "Holidays", href: "/blog?occasion=holidays" },
-                ].map((item) => (
-                  <li key={item.label} className="mb-2">
+              <p className="mb-4 font-bold text-gray-900">
+                Recipes
+              </p>
+
+              <ul className="font-normal normal-case tracking-normal text-gray-600">
+                {recipeLinks.map((item) => (
+                  <li
+                    key={item.label}
+                    className="mb-2"
+                  >
                     <Link
                       href={item.href}
-                      className="hover:text-primary transition-colors"
+                      className="transition-colors hover:text-primary"
                     >
                       {item.label}
                     </Link>
@@ -47,17 +104,22 @@ export default function Footer() {
                 ))}
               </ul>
             </div>
+
             <div>
-              <p className="text-gray-900 font-bold mb-4">Learn More</p>
-              <ul className="text-gray-600 font-normal normal-case tracking-normal">
-                {[
-                  { label: "About Us", href: "/about" },
-                  { label: "Contact", href: "/contact" },
-                  { label: "Privacy Policy", href: "/privacy" },
-                  { label: "Terms of Service", href: "/terms" },
-                ].map((item) => (
-                  <li key={item.label} className="mb-2">
-                    <Link href={item.href} className="hover:text-primary transition-colors">
+              <p className="mb-4 font-bold text-gray-900">
+                Learn More
+              </p>
+
+              <ul className="font-normal normal-case tracking-normal text-gray-600">
+                {informationLinks.map((item) => (
+                  <li
+                    key={item.label}
+                    className="mb-2"
+                  >
+                    <Link
+                      href={item.href}
+                      className="transition-colors hover:text-primary"
+                    >
                       {item.label}
                     </Link>
                   </li>
@@ -67,8 +129,11 @@ export default function Footer() {
           </nav>
         </div>
 
-        <div className="text-center text-xs text-gray-500 font-medium">
-          <p>© {new Date().getFullYear()} CookeTricks. All Rights Reserved.</p>
+        <div className="text-center text-xs font-medium text-gray-500">
+          <p>
+            © {new Date().getFullYear()}{' '}
+            CookeTricks. All Rights Reserved.
+          </p>
         </div>
       </div>
     </footer>
