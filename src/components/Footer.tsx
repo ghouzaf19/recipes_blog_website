@@ -34,6 +34,10 @@ const informationLinks = [
     href: '/editorial-policy',
   },
   {
+  label: 'Recipe Testing Policy',
+  href: '/recipe-testing',
+  },
+  {
     label: 'Contact',
     href: '/contact',
   },
