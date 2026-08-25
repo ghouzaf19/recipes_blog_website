@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star, ChevronRight, Search } from "lucide-react";
 import Header from "@/components/Header";
+import type { Metadata } from 'next';
 import { getPosts, safeJsonLd, type BlogPost } from "@/lib/wordpress";
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

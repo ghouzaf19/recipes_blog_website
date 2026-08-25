@@ -2,8 +2,12 @@ import Header from "@/components/Header";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Us | CookeTricks",
-  description: "Get in touch with the CookeTricks team.",
+  title: 'Contact Us',
+  description:
+    'Contact the CookeTricks team with questions, recipe feedback, correction requests or business inquiries.',
+  alternates: {
+    canonical: '/contact',
+  },
 };
 
 export default function ContactPage() {

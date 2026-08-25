@@ -2,8 +2,12 @@ import Header from "@/components/Header";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | CookeTricks",
-  description: "Terms of Service for CookeTricks.",
+  title: 'Terms of Service',
+  description:
+    'Read the terms that govern access to and use of the CookeTricks website and its content.',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {

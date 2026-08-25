@@ -2,8 +2,12 @@ import Header from "@/components/Header";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About Us | CookeTricks",
-  description: "Learn more about CookeTricks and our mission to share expert culinary hacks.",
+  title: 'About Us',
+  description:
+    'Learn about CookeTricks, our editorial standards and our mission to share practical recipes and cooking guides.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

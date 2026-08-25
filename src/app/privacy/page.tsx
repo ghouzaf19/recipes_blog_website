@@ -2,8 +2,12 @@ import Header from "@/components/Header";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | CookeTricks",
-  description: "Privacy Policy for CookeTricks.",
+  title: 'Privacy Policy',
+  description:
+    'Read the CookeTricks Privacy Policy and learn how information may be collected, used and protected.',
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {

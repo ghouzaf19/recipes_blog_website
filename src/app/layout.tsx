@@ -1,35 +1,66 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { SITE_URL } from "@/lib/wordpress";
+import type { Metadata } from 'next';
+import {
+  Cormorant_Garamond,
+  Outfit,
+} from 'next/font/google';
 
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import Footer from '@/components/Footer';
+import { SITE_URL } from '@/lib/wordpress';
+
+import './globals.css';
 
 const serif = Cormorant_Garamond({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  variable: '--font-serif',
+  subsets: ['latin'],
+  weight: [
+    '300',
+    '400',
+    '500',
+    '600',
+    '700',
+  ],
+  style: ['normal', 'italic'],
 });
 
 const sans = Outfit({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  variable: '--font-sans',
+  subsets: ['latin'],
+  weight: [
+    '300',
+    '400',
+    '500',
+    '600',
+    '700',
+  ],
 });
+
+const defaultTitle =
+  'CookeTricks - Recipes & Practical Cooking Guides';
+
+const defaultDescription =
+  'Practical recipes, clear cooking instructions and useful kitchen guides for busy home cooks.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+
+  applicationName: 'CookeTricks',
+
   title: {
-    default: "CookeTricks - Recipes & Practical Cooking Guides",
-    template: "%s | CookeTricks"
+    default: defaultTitle,
+    template: '%s | CookeTricks',
   },
-  description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
-  alternates: {
-    canonical: '/',
-  },
+
+  description: defaultDescription,
+
+  creator: 'CookeTricks Editorial',
+  publisher: 'CookeTricks',
+
+  category: 'Food and Drink',
+
   robots: {
     index: true,
     follow: true,
+
     googleBot: {
       index: true,
       follow: true,
@@ -38,27 +69,26 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // Additional metadata for better SEO
+
   openGraph: {
-    title: "CookeTricks - Recipes & Practical Cooking Guides",
-    description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
+    title: defaultTitle,
+    description: defaultDescription,
     url: SITE_URL,
-    siteName: "CookeTricks",
+    siteName: 'CookeTricks',
     locale: 'en_US',
     type: 'website',
   },
+
   twitter: {
-    card: "summary_large_image",
-    title: "CookeTricks - Recipes & Practical Cooking Guides",
-    description: "Discover recipes, tested cooking notes, and practical kitchen guides from CookeTricks.",
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: defaultDescription,
   },
+
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png",
+    icon: '/favicon.ico',
   },
 };
-
-import Footer from "@/components/Footer";
 
 export default function RootLayout({
   children,
@@ -68,9 +98,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${serif.variable} font-sans h-full antialiased`}
+      className={`${sans.variable} ${serif.variable} h-full font-sans antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#f9f7f2] text-[#2c2c2c]">
+      <body className="flex min-h-full flex-col bg-[#f9f7f2] text-[#2c2c2c]">
         {children}
         <Footer />
       </body>
