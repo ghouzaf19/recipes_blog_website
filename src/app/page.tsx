@@ -275,7 +275,7 @@ export default async function Home() {
                   <h3 className="font-medium text-gray-900 group-hover:text-[#1a73e8] text-lg leading-snug line-clamp-2 mb-2 transition-colors">
                     {post.title}
                   </h3>
-                  <div className="flex items-center gap-1 flex-wrap text-[#F06D06]">
+                  <div className="flex items-center gap-1 flex-wrap text-[#B54708]">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star key={s} className="w-3.5 h-3.5 fill-current" />
                     ))}
@@ -302,7 +302,7 @@ export default async function Home() {
               </div>
             </div>
             <div className="w-full lg:w-1/2 flex flex-col justify-center text-center lg:text-left lg:pl-8">
-              <span className="text-[#F06D06] font-bold tracking-widest uppercase text-sm mb-4 block">Cooking inspiration</span>
+              <span className="text-[#B54708] font-bold tracking-widest uppercase text-sm mb-4 block">Cooking inspiration</span>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6 leading-tight">
                 Recipes worth exploring
               </h2>
@@ -399,9 +399,9 @@ export default async function Home() {
               />
             </div>
             <div className="w-full md:w-1/2 p-10 md:p-14 lg:p-20 flex flex-col justify-center text-white">
-              <h2 className="text-sm font-bold tracking-widest uppercase mb-3 text-blue-200">About CookeTricks</h2>
+              <h2 className="text-sm font-bold tracking-widest uppercase mb-3 text-white">About CookeTricks</h2>
               <h3 className="font-serif text-4xl md:text-5xl font-bold mb-6 leading-tight">Make everyday cooking easier.</h3>
-              <p className="text-blue-100 text-lg mb-8 leading-relaxed">
+              <p className="text-white text-lg mb-8 leading-relaxed">
                 CookeTricks brings recipes, techniques, and practical kitchen notes into a format that is easy to follow. Each article clearly identifies its author and review dates.
               </p>
               <div className="flex items-center gap-4">
@@ -417,7 +417,7 @@ export default async function Home() {
                 </div>
                 <div>
                   <p className="font-bold">CookeTricks Editorial</p>
-                  <p className="text-blue-200 text-sm">Recipe and cooking guides</p>
+                  <p className="text-white text-sm">Recipe and cooking guides</p>
                 </div>
               </div>
             </div>
@@ -468,7 +468,7 @@ export default async function Home() {
             <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#F06D06] rounded-full mix-blend-overlay opacity-10 translate-x-1/2 translate-y-1/2 blur-3xl pointer-events-none"></div>
             
             <div className="relative z-10 max-w-2xl mx-auto">
-              <span className="inline-block bg-white text-[#F06D06] text-sm font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6 shadow-sm border border-[#F06D06]/20">Weekly Inspiration</span>
+              <span className="inline-block bg-white text-[#B54708] text-sm font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6 shadow-sm border border-[#B54708]/20">Weekly Inspiration</span>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-6 leading-tight">
                 Get our best recipes delivered to your inbox.
               </h2>
