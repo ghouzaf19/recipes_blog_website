@@ -1,3 +1,4 @@
+import Script from "next/script";
 import type { Metadata } from 'next';
 import {
   Cormorant_Garamond,
@@ -89,7 +90,8 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
   },
 };
-
+const GA_MEASUREMENT_ID =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -101,6 +103,23 @@ export default function RootLayout({
       className={`${sans.variable} ${serif.variable} h-full font-sans antialiased`}
     >
       <body className="flex min-h-full flex-col bg-[#f9f7f2] text-[#2c2c2c]">
+  {GA_MEASUREMENT_ID && (
+    <>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        strategy="afterInteractive"
+      />
+
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_MEASUREMENT_ID}');
+        `}
+      </Script>
+    </>
+  )}
         {children}
         <Footer />
       </body>
