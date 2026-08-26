@@ -297,7 +297,7 @@ export default async function Home() {
                   fill
                   className="object-cover transition-transform duration-700 hover:scale-105"
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  unoptimized
+                  quality={70}
                 />
               </div>
             </div>
@@ -395,7 +395,7 @@ export default async function Home() {
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
-                unoptimized
+                quality={70}
               />
             </div>
             <div className="w-full md:w-1/2 p-10 md:p-14 lg:p-20 flex flex-col justify-center text-white">
@@ -406,7 +406,14 @@ export default async function Home() {
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden relative bg-white">
-                  <Image src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=200&auto=format&fit=crop" fill className="object-cover" alt="Author" unoptimized />
+                  <Image
+  src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=200&auto=format&fit=crop"
+  alt=""
+  fill
+  sizes="48px"
+  quality={70}
+  className="object-cover"
+/>
                 </div>
                 <div>
                   <p className="font-bold">CookeTricks Editorial</p>
