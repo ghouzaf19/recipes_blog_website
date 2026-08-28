@@ -500,19 +500,31 @@ export default async function BlogPostPage({
           </div>
 
           {isPreview && (
-            <div
-              role="status"
-              className="mx-auto mt-10 max-w-3xl rounded-xl border border-amber-300 bg-amber-50 p-5 text-left text-base leading-relaxed text-amber-950"
-            >
-              <strong>
-                ⚠️ Editorial draft — needs testing.
-              </strong>{' '}
-              Do not publish until ingredient
-              quantities, cooking times, yield,
-              flavor, photos and nutrition have been
-              verified.
-            </div>
-          )}
+  <div
+    role="status"
+    className="mx-auto mt-10 max-w-3xl rounded-xl border border-amber-300 bg-amber-50 p-5 text-left text-base leading-relaxed text-amber-950"
+  >
+    {post.data.contentType === 'recipe' ? (
+      <>
+        <strong>
+          ⚠️ Editorial draft — needs testing.
+        </strong>{' '}
+        Do not publish until ingredient quantities,
+        cooking times, yield, flavor, photos, and
+        nutrition have been verified.
+      </>
+    ) : (
+      <>
+        <strong>
+          ⚠️ Editorial draft — fact-check required.
+        </strong>{' '}
+        Verify factual claims, food-safety guidance,
+        sources, internal links, and visuals before
+        publishing.
+      </>
+    )}
+  </div>
+)}
         </header>
 
         {post.data.featuredImage && (
