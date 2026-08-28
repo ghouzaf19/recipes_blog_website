@@ -9,9 +9,9 @@ const navItems = [
     name: "Dinners",
     href: "/blog?mealType=dinner",
     items: [
-      { label: "Quick Dinners", href: "/blog?tag=quick-dinners" },
-      { label: "Healthy Dinners", href: "/blog?tag=healthy-dinners" },
-      { label: "Kid-Friendly", href: "/blog?tag=kid-friendly" },
+      { label: "Quick Dinners", href: "/blog?category=quick-dinners" },
+      { label: "Healthy Dinners", href: "/blog?category=healthy-dinners" },
+      { label: "Kid-Friendly", href: "/blog?category=kid-friendly" },
     ],
   },
   {
@@ -25,14 +25,14 @@ const navItems = [
     ],
   },
   {
-    name: "Ingredients",
-    href: "/blog?category=ingredients",
-    items: [
-      { label: "Chicken", href: "/blog?tag=chicken" },
-      { label: "Beef", href: "/blog?tag=beef" },
-      { label: "Seafood", href: "/blog?tag=seafood" },
-      { label: "Vegetarian", href: "/blog?diet=vegetarian" },
-    ],
+  name: "Ingredients",
+  href: "/blog",
+  items: [
+    { label: "Chicken", href: "/blog?category=chicken" },
+    { label: "Beef", href: "/blog?category=beef" },
+    { label: "Seafood", href: "/blog?category=seafood" },
+    { label: "Vegetarian", href: "/blog?diet=vegetarian" },
+  ],
   },
   {
     name: "Occasions",
@@ -57,9 +57,9 @@ const navItems = [
     name: "Kitchen Tricks",
     href: "/blog?category=kitchen-tricks",
     items: [
-      { label: "Prep Hacks", href: "/blog?tag=prep-hacks" },
-      { label: "Storage Secrets", href: "/blog?tag=storage" },
-      { label: "Flavor Boosters", href: "/blog?tag=flavor" },
+      { label: "Prep Hacks", href: "/blog?category=prep-hacks" },
+      { label: "Storage Secrets", href: "/blog?category=storage" },
+      { label: "Flavor Boosters", href: "/blog?category=flavor" },
     ],
   },
 ];
