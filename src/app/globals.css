@@ -209,3 +209,15 @@ h3 {
     padding-right: 1rem;
   }
 }
+.wp-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+}
+
+.wp-content table th,
+.wp-content table td {
+  white-space: nowrap;
+}
