@@ -365,7 +365,7 @@ export default async function Home() {
               linkText="Explore chicken"
             />
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {chickenPosts.slice(0, 4).map((post) => (
                 <RecipeCard key={post.id} post={post} />
               ))}
@@ -439,7 +439,7 @@ export default async function Home() {
                       Cooking Guide
                     </p>
 
-                    <h3 className="mt-2 font-serif text-xl font-semibold leading-snug transition-colors group-hover:text-[#A94F2B] md:text-2xl">
+                    <h3 className="mt-2 font-serif text-xl font-semibold leading-snug transition-colors group-hover:text-[#A94F2B] md:text-2xl line-clamp-3">
                       {post.title}
                     </h3>
 
