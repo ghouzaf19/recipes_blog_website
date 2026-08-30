@@ -302,7 +302,7 @@ export default async function Home() {
                           {contentLabel(post)}
                         </p>
 
-                        <h3 className="mt-1 font-semibold leading-snug transition-colors group-hover:text-[#A94F2B]">
+                        <h3 className="mt-1 font-semibold text-sm sm:text-base leading-snug transition-colors group-hover:text-[#A94F2B] line-clamp-3">
                           {post.title}
                         </h3>
                       </div>
@@ -383,7 +383,7 @@ export default async function Home() {
               linkText="More dinners"
             />
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {dinnerPosts.slice(0, 4).map((post) => (
                 <RecipeCard key={post.id} post={post} />
               ))}
