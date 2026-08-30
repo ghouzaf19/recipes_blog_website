@@ -283,29 +283,29 @@ export default async function Home() {
 
                 <div className="divide-y divide-gray-200 border-t border-gray-200">
                   {latestGrid.map((post) => (
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      key={post.id}
-                      className="group grid grid-cols-[110px_1fr] gap-4 py-5"
-                    >
-                      <div className="relative aspect-square overflow-hidden bg-gray-100">
-                        <PostImage
-                          post={post}
-                          sizes="110px"
-                          className="transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
+                   <Link
+  href={`/blog/${post.slug}`}
+  key={post.id}
+  className="group grid grid-cols-[120px_1fr] gap-4 py-5"
+>
+  <div className="relative aspect-square overflow-hidden bg-gray-100">
+    <PostImage
+      post={post}
+      sizes="120px"
+      className="transition-transform duration-500 group-hover:scale-105"
+    />
+  </div>
 
-                      <div className="flex flex-col justify-center">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A94F2B]">
-                          {contentLabel(post)}
-                        </p>
+  <div className="flex flex-col justify-center">
+    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#A94F2B]">
+      {contentLabel(post)}
+    </p>
 
-                        <h3 className="mt-1 font-semibold text-sm sm:text-base leading-snug transition-colors group-hover:text-[#A94F2B] line-clamp-3">
-                          {post.title}
-                        </h3>
-                      </div>
-                    </Link>
+    <h3 className="mt-1 font-semibold text-sm sm:text-base leading-snug transition-colors group-hover:text-[#A94F2B] line-clamp-3">
+      {post.title}
+    </h3>
+  </div>
+</Link>
                   ))}
                 </div>
               </div>
