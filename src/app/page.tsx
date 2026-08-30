@@ -352,7 +352,7 @@ export default async function Home() {
       <Link
         key={item.name}
         href={item.href}
-        className="group flex flex-col items-center text-center"
+        className="group flex flex-col items-center text-center min-h-[165px]"
       >
         <div className="relative aspect-square w-full max-w-[135px] overflow-hidden rounded-full bg-[#f5eee8] ring-1 ring-[#eadfd6] transition-all duration-300 group-hover:-translate-y-1 group-hover:ring-2 group-hover:ring-[#A94F2B] group-hover:shadow-md sm:max-w-[155px]">
           <Image
@@ -364,7 +364,7 @@ export default async function Home() {
           />
         </div>
 
-        <h3 className="mt-3 max-w-[140px] font-serif text-sm font-semibold leading-tight text-gray-900 transition-colors group-hover:text-[#A94F2B] sm:text-base">
+        <h3 className="mt-3 min-h-[44px] max-w-[140px] font-serif text-sm font-semibold leading-tight text-gray-900 transition-colors group-hover:text-[#A94F2B] sm:text-base">
           {item.name}
         </h3>
       </Link>
