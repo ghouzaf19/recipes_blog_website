@@ -321,7 +321,7 @@ export default async function Home() {
     description="Find recipes and cooking guides by what you want to cook or learn."
   />
 
-  <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+  <div className="grid grid-cols-3 gap-x-4 gap-y-8 sm:grid-cols-5 sm:gap-6">
     {[
       {
         name: "Chicken",
@@ -341,12 +341,12 @@ export default async function Home() {
       {
         name: "Cooking Guides",
         href: "/blog",
-        img: "/categories/tips.png",
+        img: "/categories/ingredients.png",
       },
       {
         name: "All Recipes",
         href: "/blog",
-        img: "/categories/meals.png",
+        img: "/categories/cuisines.png",
       },
     ].map((item) => (
       <Link
@@ -354,17 +354,17 @@ export default async function Home() {
         href={item.href}
         className="group flex flex-col items-center text-center"
       >
-        <div className="relative aspect-square w-full max-w-[170px] overflow-hidden rounded-full bg-[#f5eee8] ring-1 ring-[#eadfd6] transition duration-300 group-hover:-translate-y-1 group-hover:ring-[#A94F2B] group-hover:shadow-lg">
+        <div className="relative aspect-square w-full max-w-[135px] overflow-hidden rounded-full bg-[#f5eee8] ring-1 ring-[#eadfd6] transition-all duration-300 group-hover:-translate-y-1 group-hover:ring-2 group-hover:ring-[#A94F2B] group-hover:shadow-md sm:max-w-[155px]">
           <Image
             src={item.img}
             alt={item.name}
             fill
-            sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 170px"
+            sizes="(max-width: 640px) 30vw, 155px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
 
-        <h3 className="mt-4 font-serif text-lg font-semibold text-gray-900 transition-colors group-hover:text-[#A94F2B] sm:text-xl">
+        <h3 className="mt-3 max-w-[140px] font-serif text-sm font-semibold leading-tight text-gray-900 transition-colors group-hover:text-[#A94F2B] sm:text-base">
           {item.name}
         </h3>
       </Link>
