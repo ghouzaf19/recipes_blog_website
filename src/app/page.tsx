@@ -314,46 +314,63 @@ export default async function Home() {
           </section>
         )}
 
-        {/* BROWSE */}
-        <section className="pb-16">
-          <SectionHeading
-            title="Browse CookeTricks"
-            description="Find recipes and guides by what you want to cook or learn."
-          />
+        {/* BROWSE COOKETRICKS */}
+<section className="pb-16">
+  <SectionHeading
+    title="Browse CookeTricks"
+    description="Find recipes and cooking guides by what you want to cook or learn."
+  />
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-            {[
-              {
-                name: "Chicken",
-                href: "/blog?category=chicken",
-              },
-              {
-                name: "Quick Dinners",
-                href: "/blog?mealType=dinner",
-              },
-              {
-                name: "Air Fryer",
-                href: "/blog?q=air+fryer",
-              },
-              {
-                name: "Cooking Guides",
-                href: "/blog",
-              },
-              {
-                name: "All Recipes",
-                href: "/blog",
-              },
-            ].map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex min-h-24 sm:min-h-28 items-center justify-center rounded-2xl border border-[#e9ddd4] bg-[#fbf7f3] px-4 text-center font-serif text-xl font-semibold transition hover:-translate-y-1 hover:border-[#A94F2B] hover:text-[#A94F2B]"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        </section>
+  <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+    {[
+      {
+        name: "Chicken",
+        href: "/blog?category=chicken",
+        img: "/categories/meals.png",
+      },
+      {
+        name: "Quick Dinners",
+        href: "/blog?mealType=dinner",
+        img: "/categories/dinners.png",
+      },
+      {
+        name: "Air Fryer",
+        href: "/blog?q=air+fryer",
+        img: "/categories/tips.png",
+      },
+      {
+        name: "Cooking Guides",
+        href: "/blog",
+        img: "/categories/tips.png",
+      },
+      {
+        name: "All Recipes",
+        href: "/blog",
+        img: "/categories/meals.png",
+      },
+    ].map((item) => (
+      <Link
+        key={item.name}
+        href={item.href}
+        className="group flex flex-col items-center text-center"
+      >
+        <div className="relative aspect-square w-full max-w-[170px] overflow-hidden rounded-full bg-[#f5eee8] ring-1 ring-[#eadfd6] transition duration-300 group-hover:-translate-y-1 group-hover:ring-[#A94F2B] group-hover:shadow-lg">
+          <Image
+            src={item.img}
+            alt={item.name}
+            fill
+            sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 170px"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
+
+        <h3 className="mt-4 font-serif text-lg font-semibold text-gray-900 transition-colors group-hover:text-[#A94F2B] sm:text-xl">
+          {item.name}
+        </h3>
+      </Link>
+    ))}
+  </div>
+</section>
 
         {/* CHICKEN */}
         {chickenPosts.length > 0 && (
