@@ -86,7 +86,7 @@ function RecipeCard({ post }: { post: PostCard }) {
         {contentLabel(post)}
       </p>
 
-      <h3 className="text-xl font-semibold leading-snug text-gray-900 transition-colors group-hover:text-[#A94F2B]">
+      <h3 className="text-base sm:text-lg lg:text-xl font-semibold leading-snug text-gray-900 transition-colors group-hover:text-[#A94F2B] line-clamp-3">
         {post.title}
       </h3>
 
