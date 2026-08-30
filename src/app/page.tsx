@@ -209,7 +209,7 @@ export default async function Home() {
               Practical home cooking
             </p>
 
-            <h1 className="font-serif text-4xl font-semibold leading-tight text-gray-900 md:text-6xl">
+            <h1 className="font-serif text-[2.35rem] sm:text-5xl md:text-6xl font-semibold leading-[1.08] text-gray-900">
               Recipes that tell you how, why, and what can go wrong.
             </h1>
 
@@ -266,7 +266,7 @@ export default async function Home() {
                   Featured {contentLabel(featuredPost)}
                 </p>
 
-                <h2 className="mt-2 font-serif text-3xl font-semibold leading-tight transition-colors group-hover:text-[#A94F2B] md:text-5xl">
+                <h2 className="mt-2 font-serif text-[2rem] sm:text-4xl md:text-5xl font-semibold leading-[1.1] transition-colors group-hover:text-[#A94F2B]">
                   {featuredPost.title}
                 </h2>
 
@@ -347,7 +347,7 @@ export default async function Home() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex min-h-28 items-center justify-center rounded-2xl border border-[#e9ddd4] bg-[#fbf7f3] px-4 text-center font-serif text-xl font-semibold transition hover:-translate-y-1 hover:border-[#A94F2B] hover:text-[#A94F2B]"
+                className="flex min-h-24 sm:min-h-28 items-center justify-center rounded-2xl border border-[#e9ddd4] bg-[#fbf7f3] px-4 text-center font-serif text-xl font-semibold transition hover:-translate-y-1 hover:border-[#A94F2B] hover:text-[#A94F2B]"
               >
                 {item.name}
               </Link>
