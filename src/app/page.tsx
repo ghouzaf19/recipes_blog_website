@@ -475,57 +475,58 @@ export default async function Home() {
           </section>
         )}
 
-        {/* ABOUT */}
-        <section className="pb-18">
-          <div className="grid overflow-hidden rounded-3xl bg-[#A94F2B] text-white md:grid-cols-2">
-            <div className="flex flex-col justify-center p-8 md:p-12 lg:p-16">
-              <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-white/75">
-                About CookeTricks
-              </p>
+  {/* ABOUT COOKETRICKS */}
+<section className="pb-16">
+  <div className="overflow-hidden rounded-3xl bg-[#A94F2B] text-white">
+    <div className="grid gap-0 md:grid-cols-[1.25fr_0.75fr]">
+      <div className="p-8 sm:p-10 md:p-12">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-white/75 sm:text-sm">
+          About CookeTricks
+        </p>
 
-              <h2 className="font-serif text-4xl font-semibold leading-tight md:text-5xl">
-                Practical cooking, explained clearly.
-              </h2>
+        <h2 className="font-serif text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl">
+          Practical cooking, explained clearly.
+        </h2>
 
-              <p className="mt-6 max-w-xl text-lg leading-8 text-white/90">
-                CookeTricks focuses on recipes and guides that explain how to
-                cook something, why the method works, and what to do when things
-                do not go as planned.
-              </p>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-white/90 sm:text-lg">
+          CookeTricks focuses on recipes and cooking guides that explain how to
+          cook something, why the method works, and what to do when things do
+          not go as planned.
+        </p>
 
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  href="/about"
-                  className="rounded-full bg-white px-6 py-3 font-bold text-[#A94F2B] transition hover:bg-[#f8ede7]"
-                >
-                  About CookeTricks
-                </Link>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link
+            href="/about"
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[#A94F2B] transition hover:bg-[#f8ede7]"
+          >
+            About CookeTricks
+          </Link>
 
-                <Link
-                  href="/editorial-policy"
-                  className="rounded-full border border-white/40 px-6 py-3 font-bold text-white transition hover:bg-white/10"
-                >
-                  Editorial Policy
-                </Link>
-              </div>
-            </div>
+          <Link
+            href="/editorial-policy"
+            className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+          >
+            Editorial Policy
+          </Link>
+        </div>
+      </div>
 
-            <div className="flex min-h-[320px] items-center justify-center bg-[#8c3f25] p-10">
-              <div className="max-w-sm text-center">
-                <UtensilsCrossed className="mx-auto h-16 w-16 text-white/80" />
+      <div className="flex items-center justify-center bg-[#8c3f25] px-8 py-10 md:px-10">
+        <div className="max-w-xs text-center">
+          <UtensilsCrossed className="mx-auto h-12 w-12 text-white/80" />
 
-                <p className="mt-6 font-serif text-2xl font-semibold">
-                  How + Why + What Can Go Wrong
-                </p>
+          <p className="mt-5 font-serif text-xl font-semibold sm:text-2xl">
+            How + Why + What Can Go Wrong
+          </p>
 
-                <p className="mt-3 leading-7 text-white/80">
-                  That is the practical framework behind CookeTricks recipes
-                  and cooking guides.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+          <p className="mt-3 text-sm leading-6 text-white/80 sm:text-base">
+            The practical framework behind CookeTricks recipes and cooking guides.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* FINAL CTA */}
         <section className="pb-20">
