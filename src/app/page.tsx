@@ -528,30 +528,38 @@ export default async function Home() {
   </div>
 </section>
 
-        {/* FINAL CTA */}
-        <section className="pb-20">
-          <div className="rounded-3xl border border-[#e9ddd4] bg-[#fbf7f3] px-6 py-12 text-center md:px-12 md:py-16">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#A94F2B]">
-              Find your next recipe
-            </p>
+       {/* FINAL CTA */}
+<section className="pb-16">
+  <div className="rounded-3xl border border-[#e9ddd4] bg-[#fbf7f3] px-6 py-10 text-center sm:px-10 md:py-12">
+    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#A94F2B] sm:text-sm">
+      Keep Cooking
+    </p>
 
-            <h2 className="mx-auto mt-3 max-w-2xl font-serif text-4xl font-semibold md:text-5xl">
-              What are you cooking today?
-            </h2>
+    <h2 className="mx-auto mt-3 max-w-2xl font-serif text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl">
+      Find your next recipe or cooking guide.
+    </h2>
 
-            <p className="mx-auto mt-5 max-w-xl text-lg text-gray-600">
-              Browse recipes, chicken guides, cooking methods, and practical
-              kitchen answers.
-            </p>
+    <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-gray-600 sm:text-lg">
+      Browse practical recipes, chicken guides, air fryer ideas, and everyday cooking techniques.
+    </p>
 
-            <Link
-              href="/blog"
-              className="mt-8 inline-flex rounded-full bg-[#A94F2B] px-8 py-4 font-bold text-white transition hover:bg-[#873d22]"
-            >
-              Browse all recipes
-            </Link>
-          </div>
-        </section>
+    <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+      <Link
+        href="/blog"
+        className="inline-flex rounded-full bg-[#A94F2B] px-7 py-3 text-sm font-bold text-white transition hover:bg-[#873d22]"
+      >
+        Browse All Recipes
+      </Link>
+
+      <Link
+        href="/blog?category=chicken"
+        className="inline-flex rounded-full border border-[#A94F2B]/30 bg-white px-7 py-3 text-sm font-bold text-[#A94F2B] transition hover:border-[#A94F2B]"
+      >
+        Explore Chicken
+      </Link>
+    </div>
+  </div>
+</section>
       </div>
     </main>
   );
