@@ -202,46 +202,45 @@ export default async function Home() {
       <Header />
 
       {/* HERO INTRO */}
-      <section className="border-b border-[#eadfd6] bg-[#fbf7f3]">
-        <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-6 md:py-16 lg:px-8">
-          <div className="max-w-3xl">
-            <p className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-[#A94F2B]">
-              Practical home cooking
-            </p>
+<section className="border-b border-[#eadfd6] bg-[#fbf7f3]">
+  <div className="mx-auto max-w-[1200px] px-4 py-9 sm:px-6 md:py-11 lg:px-8">
+    <div className="mx-auto max-w-3xl text-center">
+      <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#A94F2B] sm:text-sm">
+        Practical Home Cooking
+      </p>
 
-            <h1 className="font-serif text-[2.35rem] sm:text-5xl md:text-6xl font-semibold leading-[1.08] text-gray-900">
-              Recipes that tell you how, why, and what can go wrong.
-            </h1>
+      <h1 className="font-serif text-[2.2rem] font-semibold leading-[1.08] text-gray-900 sm:text-5xl md:text-6xl">
+        Recipes that tell you how, why, and what can go wrong.
+      </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-              Clear recipes, cooking times, temperatures, techniques, and
-              troubleshooting for everyday home cooks.
-            </p>
+      <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">
+        Clear recipes, cooking times, temperatures, techniques, and troubleshooting for everyday home cooks.
+      </p>
 
-            <form
-              action="/blog"
-              method="GET"
-              className="relative mt-8 max-w-xl"
-            >
-              <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+      <form
+        action="/blog"
+        method="GET"
+        className="relative mx-auto mt-6 max-w-xl"
+      >
+        <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
 
-              <input
-                type="search"
-                name="q"
-                placeholder="Search recipes and cooking guides..."
-                className="w-full rounded-full border border-gray-300 bg-white py-4 pl-13 pr-28 text-base shadow-sm outline-none transition focus:border-[#A94F2B] focus:ring-2 focus:ring-[#A94F2B]/20"
-              />
+        <input
+          type="search"
+          name="q"
+          placeholder="Search recipes..."
+          className="w-full rounded-full border border-gray-300 bg-white py-3.5 pl-13 pr-28 text-base shadow-sm outline-none transition focus:border-[#A94F2B] focus:ring-2 focus:ring-[#A94F2B]/20"
+        />
 
-              <button
-                type="submit"
-                className="absolute right-2 top-2 rounded-full bg-[#A94F2B] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#873d22]"
-              >
-                Search
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
+        <button
+          type="submit"
+          className="absolute right-2 top-1.5 rounded-full bg-[#A94F2B] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#873d22]"
+        >
+          Search
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
 
       <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
 
