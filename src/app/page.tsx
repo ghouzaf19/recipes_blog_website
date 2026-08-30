@@ -209,7 +209,7 @@ export default async function Home() {
         Practical Home Cooking
       </p>
 
-      <h1 className="font-serif text-[2.2rem] font-semibold leading-[1.08] text-gray-900 sm:text-5xl md:text-6xl">
+      <h1 className="font-serif text-[2.05rem] font-semibold leading-[1.08] text-gray-900 sm:text-5xl md:text-6xl">
         Recipes that tell you how, why, and what can go wrong.
       </h1>
 
