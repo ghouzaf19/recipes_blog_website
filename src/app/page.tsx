@@ -321,7 +321,7 @@ export default async function Home() {
     description="Find recipes and cooking guides by what you want to cook or learn."
   />
 
-  <div className="grid grid-cols-3 gap-x-4 gap-y-8 sm:grid-cols-5 sm:gap-6">
+  <div className="grid grid-cols-6 gap-x-4 gap-y-8 sm:grid-cols-5 sm:gap-6">
     {[
       {
         name: "Chicken",
@@ -348,11 +348,15 @@ export default async function Home() {
         href: "/blog",
         img: "/categories/cuisines.png",
       },
-    ].map((item) => (
+    ].map((item, index) => (
       <Link
         key={item.name}
         href={item.href}
-        className="group flex flex-col items-center text-center min-h-[165px]"
+        className={`group col-span-2 flex min-h-[165px] flex-col items-center text-center sm:col-span-1 ${
+  index === 3 ? "col-start-2 sm:col-start-auto" : ""
+} ${
+  index === 4 ? "col-start-4 sm:col-start-auto" : ""
+}`}
       >
         <div className="relative aspect-square w-full max-w-[135px] overflow-hidden rounded-full bg-[#f5eee8] ring-1 ring-[#eadfd6] transition-all duration-300 group-hover:-translate-y-1 group-hover:ring-2 group-hover:ring-[#A94F2B] group-hover:shadow-md sm:max-w-[155px]">
           <Image
