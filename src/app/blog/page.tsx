@@ -25,6 +25,7 @@ function titleFor(params: SearchParams): string {
   const diet = first(params.diet);
   const tag = first(params.tag);
   if (q) return `Search Results for “${q}”`;
+  if (category === 'kitchen-tips') return 'Kitchen Tips';
   if (category) return `${label(category)} Recipes`;
   if (cuisine) return `${label(cuisine)} Cuisine`;
   if (mealType) return label(mealType);
