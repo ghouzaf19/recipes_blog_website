@@ -54,8 +54,8 @@ const navItems = [
     ],
   },
   {
-    name: "Kitchen Tricks",
-    href: "/blog?category=kitchen-tricks",
+    name: "Kitchen Tips",
+    href: "/blog?category=Kitchen Tips",
     items: [
       { label: "Prep Hacks", href: "/blog?category=prep-hacks" },
       { label: "Storage Secrets", href: "/blog?category=storage" },
