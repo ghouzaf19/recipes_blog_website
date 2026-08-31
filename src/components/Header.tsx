@@ -25,14 +25,14 @@ const navItems = [
     ],
   },
   {
-  name: "Ingredients",
-  href: "/blog",
-  items: [
-    { label: "Chicken", href: "/blog?category=chicken" },
-    { label: "Beef", href: "/blog?category=beef" },
-    { label: "Seafood", href: "/blog?category=seafood" },
-    { label: "Vegetarian", href: "/blog?diet=vegetarian" },
-  ],
+    name: "Ingredients",
+    href: "/blog",
+    items: [
+      { label: "Chicken", href: "/blog?category=chicken" },
+      { label: "Beef", href: "/blog?category=beef" },
+      { label: "Seafood", href: "/blog?category=seafood" },
+      { label: "Vegetarian", href: "/blog?diet=vegetarian" },
+    ],
   },
   {
     name: "Occasions",
@@ -68,18 +68,28 @@ export default function Header() {
   // Close desktop dropdown when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
         setActiveSubmenu(null);
       }
     }
+
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
   }, []);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isMenuOpen]);
 
   const closeMobileMenu = () => {
@@ -102,20 +112,32 @@ export default function Header() {
                 className="lg:hidden text-gray-700 hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                {isMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
+                {isMenuOpen ? (
+                  <X className="w-7 h-7" />
+                ) : (
+                  <Menu className="w-7 h-7" />
+                )}
               </button>
 
-              <Link href="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
+              <Link
+                href="/"
+                className="flex items-center gap-2"
+                onClick={closeMobileMenu}
+              >
                 <div className="bg-primary p-2 rounded-full hidden sm:block">
                   <Utensils className="w-6 h-6 text-white" />
                 </div>
+
                 <span className="font-serif text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900">
-                  Cooke<span className="text-primary tracking-tighter">Tricks</span>
+                  Cooke
+                  <span className="text-primary tracking-tighter">
+                    Tricks
+                  </span>
                 </span>
               </Link>
             </div>
 
-            {/* Center: Search bar (desktop) */}
+            {/* Center: Search bar desktop */}
             <form
               role="search"
               action="/blog"
@@ -125,6 +147,7 @@ export default function Header() {
               <label htmlFor="site-search" className="sr-only">
                 Search recipes
               </label>
+
               <input
                 id="site-search"
                 name="q"
@@ -132,6 +155,7 @@ export default function Header() {
                 placeholder="Find a recipe or ingredient…"
                 className="w-full bg-gray-100 border border-gray-300 text-gray-900 rounded-full px-6 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-medium"
               />
+
               <button
                 type="submit"
                 aria-label="Search"
@@ -141,7 +165,7 @@ export default function Header() {
               </button>
             </form>
 
-            {/* Right: mobile search icon */}
+            {/* Right: mobile search */}
             <div className="flex items-center gap-4 lg:hidden">
               <Link href="/blog" aria-label="Search recipes">
                 <Search className="w-6 h-6 text-gray-700 hover:text-primary transition-colors" />
@@ -150,7 +174,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Secondary Nav (Desktop dropdowns) */}
+        {/* Desktop navigation */}
         <nav
           ref={menuRef}
           aria-label="Main navigation"
@@ -162,44 +186,67 @@ export default function Header() {
                 <li
                   key={item.name}
                   className="relative py-4"
-                  onMouseEnter={() => setActiveSubmenu(item.name)}
+                  onMouseEnter={() => {
+                    if (item.items?.length) {
+                      setActiveSubmenu(item.name);
+                    }
+                  }}
                   onMouseLeave={() => setActiveSubmenu(null)}
                 >
-                  <button
-                    aria-haspopup="true"
-                    aria-expanded={activeSubmenu === item.name}
-                    className="hover:text-primary transition-colors flex items-center gap-1 py-2 font-bold uppercase cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                    onClick={() =>
-                      setActiveSubmenu(activeSubmenu === item.name ? null : item.name)
-                    }
-                  >
-                    {item.name}
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform duration-200 ${
-                        activeSubmenu === item.name ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
+                  {item.items?.length ? (
+                    <button
+                      aria-haspopup="true"
+                      aria-expanded={activeSubmenu === item.name}
+                      className="hover:text-primary transition-colors flex items-center gap-1 py-2 font-bold uppercase cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                      onClick={() =>
+                        setActiveSubmenu(
+                          activeSubmenu === item.name
+                            ? null
+                            : item.name
+                        )
+                      }
+                    >
+                      {item.name}
+
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          activeSubmenu === item.name
+                            ? "rotate-180"
+                            : ""
+                        }`}
+                      />
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className="hover:text-primary transition-colors py-2 font-bold uppercase"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
 
                   {/* Dropdown panel */}
-                  {activeSubmenu === item.name && (
-                    <div
-                      role="menu"
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-0 min-w-[180px] bg-white shadow-xl border-t-2 border-primary rounded-b-lg py-3 px-4 z-50 animate-fadeIn"
-                    >
-                      {item.items?.map((sub) => (
-                        <Link
-                          key={sub.label}
-                          href={sub.href}
-                          role="menuitem"
-                          className="block py-2 px-2 text-gray-700 hover:text-primary font-medium transition-colors text-sm hover:bg-blue-50 rounded"
-                          onClick={() => setActiveSubmenu(null)}
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                  {item.items?.length &&
+                    activeSubmenu === item.name && (
+                      <div
+                        role="menu"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-0 min-w-[180px] bg-white shadow-xl border-t-2 border-primary rounded-b-lg py-3 px-4 z-50 animate-fadeIn"
+                      >
+                        {item.items?.map((sub) => (
+                          <Link
+                            key={sub.label}
+                            href={sub.href}
+                            role="menuitem"
+                            className="block py-2 px-2 text-gray-700 hover:text-primary font-medium transition-colors text-sm hover:bg-blue-50 rounded"
+                            onClick={() =>
+                              setActiveSubmenu(null)
+                            }
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                 </li>
               ))}
             </ul>
@@ -211,7 +258,9 @@ export default function Header() {
       <div
         aria-hidden="true"
         className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${
-          isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          isMenuOpen
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none"
         }`}
         onClick={closeMobileMenu}
       />
@@ -223,7 +272,9 @@ export default function Header() {
         aria-modal="true"
         aria-label="Navigation menu"
         className={`fixed inset-y-0 left-0 w-4/5 max-w-sm bg-white z-50 lg:hidden transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+          isMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full"
         }`}
       >
         {/* Mobile header */}
@@ -233,8 +284,12 @@ export default function Header() {
             className="font-serif text-2xl font-extrabold tracking-tight text-gray-900"
             onClick={closeMobileMenu}
           >
-            Cooke<span className="text-primary tracking-tighter">Tricks</span>
+            Cooke
+            <span className="text-primary tracking-tighter">
+              Tricks
+            </span>
           </Link>
+
           <button
             aria-label="Close menu"
             onClick={closeMobileMenu}
@@ -246,8 +301,16 @@ export default function Header() {
 
         {/* Mobile search */}
         <div className="p-4 border-b border-gray-200">
-          <form role="search" action="/blog" method="GET" className="relative w-full">
-            <label htmlFor="mobile-search" className="sr-only">Search recipes</label>
+          <form
+            role="search"
+            action="/blog"
+            method="GET"
+            className="relative w-full"
+          >
+            <label htmlFor="mobile-search" className="sr-only">
+              Search recipes
+            </label>
+
             <input
               id="mobile-search"
               name="q"
@@ -255,6 +318,7 @@ export default function Header() {
               placeholder="Search recipes…"
               className="w-full bg-gray-100 border border-gray-300 text-gray-900 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             />
+
             <button
               type="submit"
               aria-label="Search"
@@ -265,44 +329,71 @@ export default function Header() {
           </form>
         </div>
 
-        {/* Mobile nav items */}
-        <nav className="overflow-y-auto flex-1 py-2" aria-label="Mobile navigation">
+        {/* Mobile nav */}
+        <nav
+          className="overflow-y-auto flex-1 py-2"
+          aria-label="Mobile navigation"
+        >
           {navItems.map((item) => (
-            <div key={item.name} className="border-b border-gray-100 last:border-0">
-              <button
-                aria-expanded={mobileExpanded === item.name}
-                onClick={() =>
-                  setMobileExpanded(mobileExpanded === item.name ? null : item.name)
-                }
-                className="w-full px-4 py-4 flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wider text-sm hover:bg-gray-50 transition-colors"
-              >
-                {item.name}
-                <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                    mobileExpanded === item.name ? "rotate-180 text-primary" : ""
-                  }`}
-                />
-              </button>
+            <div
+              key={item.name}
+              className="border-b border-gray-100 last:border-0"
+            >
+              {item.items?.length ? (
+                <>
+                  <button
+                    aria-expanded={
+                      mobileExpanded === item.name
+                    }
+                    onClick={() =>
+                      setMobileExpanded(
+                        mobileExpanded === item.name
+                          ? null
+                          : item.name
+                      )
+                    }
+                    className="w-full px-4 py-4 flex items-center justify-between text-left font-bold text-gray-900 uppercase tracking-wider text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    {item.name}
 
-              {mobileExpanded === item.name && (
-                <div className="bg-gray-50 px-4 py-2">
-                  {item.items?.map((sub) => (
-                    <Link
-                      key={sub.label}
-                      href={sub.href}
-                      className="block py-3 pl-4 text-sm font-medium text-gray-600 hover:text-primary hover:translate-x-1 transition-all"
-                      onClick={closeMobileMenu}
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
-                </div>
+                    <ChevronDown
+                      className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                        mobileExpanded === item.name
+                          ? "rotate-180 text-primary"
+                          : ""
+                      }`}
+                    />
+                  </button>
+
+                  {mobileExpanded === item.name && (
+                    <div className="bg-gray-50 px-4 py-2">
+                      {item.items?.map((sub) => (
+                        <Link
+                          key={sub.label}
+                          href={sub.href}
+                          className="block py-3 pl-4 text-sm font-medium text-gray-600 hover:text-primary hover:translate-x-1 transition-all"
+                          onClick={closeMobileMenu}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  onClick={closeMobileMenu}
+                  className="block w-full px-4 py-4 font-bold text-gray-900 uppercase tracking-wider text-sm hover:bg-gray-50 transition-colors"
+                >
+                  {item.name}
+                </Link>
               )}
             </div>
           ))}
         </nav>
 
-        {/* Mobile footer link to blog */}
+        {/* Mobile footer */}
         <div className="p-4 bg-gray-50 border-t border-gray-200">
           <Link
             href="/blog"
