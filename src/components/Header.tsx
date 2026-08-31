@@ -55,12 +55,7 @@ const navItems = [
   },
   {
     name: "Kitchen Tips",
-    href: "/blog?category=Kitchen Tips",
-    items: [
-      { label: "Prep Hacks", href: "/blog?category=prep-hacks" },
-      { label: "Storage Secrets", href: "/blog?category=storage" },
-      { label: "Flavor Boosters", href: "/blog?category=flavor" },
-    ],
+    href: "/blog?category=kitchen-tips",
   },
 ];
 
@@ -192,7 +187,7 @@ export default function Header() {
                       role="menu"
                       className="absolute top-full left-1/2 -translate-x-1/2 mt-0 min-w-[180px] bg-white shadow-xl border-t-2 border-primary rounded-b-lg py-3 px-4 z-50 animate-fadeIn"
                     >
-                      {item.items.map((sub) => (
+                      {item.items?.map((sub) => (
                         <Link
                           key={sub.label}
                           href={sub.href}
@@ -291,7 +286,7 @@ export default function Header() {
 
               {mobileExpanded === item.name && (
                 <div className="bg-gray-50 px-4 py-2">
-                  {item.items.map((sub) => (
+                  {item.items?.map((sub) => (
                     <Link
                       key={sub.label}
                       href={sub.href}
