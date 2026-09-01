@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Search, UtensilsCrossed } from "lucide-react";
+import { ChevronRight, UtensilsCrossed } from "lucide-react";
 import Header from "@/components/Header";
+import HeroSearchTrigger from "@/components/HeroSearchTrigger";
 import type { Metadata } from "next";
+
 import {
   getPosts,
   safeJsonLd,
@@ -217,27 +219,7 @@ export default async function Home() {
         Clear recipes, cooking times, temperatures, techniques, and troubleshooting for everyday home cooks.
       </p>
 
-      <form
-        action="/blog"
-        method="GET"
-        className="relative mx-auto mt-6 max-w-xl"
-      >
-        <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-
-        <input
-          type="search"
-          name="q"
-          placeholder="Search recipes..."
-          className="w-full rounded-full border border-gray-300 bg-white py-3.5 pl-13 pr-28 text-base shadow-sm outline-none transition focus:border-[#A94F2B] focus:ring-2 focus:ring-[#A94F2B]/20"
-        />
-
-        <button
-          type="submit"
-          className="absolute right-2 top-1.5 rounded-full bg-[#A94F2B] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#873d22]"
-        >
-          Search
-        </button>
-      </form>
+     <HeroSearchTrigger />
     </div>
   </div>
 </section>
