@@ -209,9 +209,9 @@ export default function SearchOverlay({
                 onClick={onClose}
                 className="flex items-center gap-2"
               >
-                <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-white transition-colors duration-200 group-hover:text-[#A94F2B]">
-                  Latest
-                </h3>
+                <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-white transition-colors duration-200 group-hover:text-[#D96A3A]">
+  Latest
+</h3>
 
                 <ChevronRight className="h-4 w-4 text-white transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#A94F2B]" />
               </Link>
@@ -230,7 +230,7 @@ export default function SearchOverlay({
                 Loading articles...
               </p>
             ) : posts.length > 0 ? (
-              <div className="relative">
+              <div className="group relative">
                 {/* Left arrow */}
                 {canScrollLeft && (
                   <button
@@ -275,9 +275,9 @@ export default function SearchOverlay({
                         )}
                       </div>
 
-                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug text-white transition-colors duration-200 group-hover:text-[#A94F2B]">
-                        {post.title}
-                      </h4>
+                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug text-white transition-colors duration-200 group-hover:text-[#D96A3A]">
+  {post.title}
+</h4>
 
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                         {post.contentType === "recipe"
@@ -289,16 +289,16 @@ export default function SearchOverlay({
                 </div>
 
                 {/* Right arrow */}
-                {canScrollRight && (
-                  <button
-                    type="button"
-                    onClick={() => scrollLatest("right")}
-                    aria-label="Next articles"
-                    className="absolute right-2 top-[55px] z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-[#A94F2B]"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </button>
-                )}
+               {canScrollRight && (
+  <button
+    type="button"
+    onClick={() => scrollLatest("right")}
+    aria-label="Next articles"
+    className="absolute right-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 hover:bg-[#D96A3A] group-hover:opacity-100"
+  >
+    <ChevronRight className="h-5 w-5" />
+  </button>
+)}
               </div>
             ) : (
               <p className="py-12 text-sm text-gray-400">
