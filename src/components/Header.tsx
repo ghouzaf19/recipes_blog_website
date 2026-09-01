@@ -138,33 +138,22 @@ export default function Header() {
               </Link>
             </div>
 
-          {/* Center: Search bar desktop */}
-<form
-  role="search"
-  action="/blog"
-  method="GET"
-  className="hidden lg:flex flex-1 max-w-2xl relative group"
->
-  <label htmlFor="site-search" className="sr-only">
-    Search recipes
-  </label>
-
-  <input
-    id="site-search"
-    name="q"
-    type="search"
-    placeholder="Search recipes, ingredients, cooking tips..."
-    className="h-14 w-full rounded-full border border-gray-300 bg-white px-6 pr-16 text-gray-900 placeholder:text-gray-400 outline-none transition-all duration-200 hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20"
-  />
-
+     {/* Desktop search button */}
+<div className="hidden lg:flex flex-1 justify-end">
   <button
-    type="submit"
-    aria-label="Search"
-    className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white transition-all duration-200 hover:scale-105 hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    type="button"
+    aria-label="Search recipes"
+    aria-expanded={isSearchOpen}
+    onClick={() => setIsSearchOpen(!isSearchOpen)}
+    className="flex h-11 w-11 items-center justify-center rounded-full text-gray-700 transition-all duration-200 hover:bg-primary hover:text-white"
   >
-    <Search className="h-5 w-5" />
+    {isSearchOpen ? (
+      <X className="h-6 w-6" />
+    ) : (
+      <Search className="h-6 w-6" />
+    )}
   </button>
-</form>
+</div>
 
 {/* Right: mobile search */}
 <div className="flex items-center gap-4 lg:hidden">
