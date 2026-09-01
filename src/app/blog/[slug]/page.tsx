@@ -564,29 +564,12 @@ export default async function BlogPostPage({
   />
 )}
 
-{!isPreview && (
-  <section className="mb-16 rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-8">
-    <p className="mb-2 text-lg font-semibold text-gray-900">
-      Enjoying CookeTricks?
-    </p>
-
-    <p className="mx-auto mb-5 max-w-xl text-sm leading-relaxed text-gray-600 sm:text-base">
-      Add CookeTricks as a Preferred Source on Google to see more of our recipes and cooking guides in your Google experience.
-    </p>
-
-    <a
-      href={`https://www.google.com/preferences/source?q=${encodeURIComponent(
-        new URL(SITE_URL).hostname
-      )}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-secondary"
-    >
-      Add CookeTricks on Google
-    </a>
-  </section>
+{post.contentHtml && (
+  <SafeHtml
+    html={post.contentHtml}
+    className="wp-content mb-16"
+  />
 )}
-
           {showRecipeCard && (
             <RecipeCard
               title={post.title}
