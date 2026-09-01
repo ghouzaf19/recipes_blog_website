@@ -33,6 +33,7 @@ export default function SearchOverlay({
 }: SearchOverlayProps) {
   const [posts, setPosts] = useState<SearchPost[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const latestRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +82,24 @@ export default function SearchOverlay({
     };
   }, [isOpen]);
 
+useEffect(() => {
+  if (!isOpen) return;
+
+  const bodyColor = window.getComputedStyle(
+    document.body
+  ).backgroundColor;
+
+  const match = bodyColor.match(/\d+/g);
+
+  if (!match) return;
+
+  const [r, g, b] = match.map(Number);
+
+  const brightness =
+    (r * 299 + g * 587 + b * 114) / 1000;
+
+  setIsDarkMode(brightness < 128);
+}, [isOpen]);
   /*
    * Load latest posts
    */
@@ -141,7 +160,13 @@ export default function SearchOverlay({
       />
 
       {/* Search surface */}
-      <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-white text-gray-900 dark:bg-[#111111] dark:text-white">
+      <div
+  className={`absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto ${
+    isDarkMode
+      ? "bg-[#111111] text-white"
+      : "bg-white text-gray-900"
+  }`}
+>
         <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-0">
           {/* Reduce / close arrow */}
           <div className="fixed left-1/2 top-[108px] z-[120] -translate-x-1/2">
@@ -189,7 +214,11 @@ export default function SearchOverlay({
               autoFocus
               autoComplete="off"
               placeholder="Search..."
-              className="h-12 w-full rounded-full border border-[#A94F2B] bg-transparent px-5 pr-14 text-gray-900 placeholder:text-gray-500 outline-none transition focus:ring-1 focus:ring-[#A94F2B] dark:text-white dark:placeholder:text-gray-400"
+              className={`h-12 w-full rounded-full border border-[#A94F2B] bg-transparent px-5 pr-14 outline-none transition focus:ring-1 focus:ring-[#A94F2B] ${
+  isDarkMode
+    ? "text-white placeholder:text-gray-400"
+    : "text-gray-900 placeholder:text-gray-500"
+}`}
             />
 
             <button
@@ -209,20 +238,30 @@ export default function SearchOverlay({
                 onClick={onClose}
                 className="flex items-center gap-2"
               >
-                <h3 className="text-sm font-medium uppercase tracking-[0.2em] !text-gray-900 transition-colors duration-200 group-hover/latest:!text-[#D96A3A] dark:!text-white">
+                <h3
+  className={`text-sm font-medium uppercase tracking-[0.2em] transition-colors duration-200 group-hover/latest:!text-[#D96A3A] ${
+    isDarkMode ? "text-white" : "text-gray-900"
+  }`}
+>
   Latest
 </h3>
 
-                <ChevronRight className="h-4 w-4 !text-gray-900 transition-all duration-200 group-hover/latest:translate-x-1 group-hover/latest:!text-[#D96A3A] dark:!text-white" />
+                <ChevronRight
+  className={`h-4 w-4 transition-all duration-200 group-hover/latest:translate-x-1 group-hover/latest:!text-[#D96A3A] ${
+    isDarkMode ? "text-white" : "text-gray-900"
+  }`}
+/>
               </Link>
 
               <Link
-                href="/blog"
-                onClick={onClose}
-                className="ml-3 -translate-x-1 text-sm text-gray-500 opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A] dark:text-white/50"
-              >
-                Show all
-              </Link>
+  href="/blog"
+  onClick={onClose}
+  className={`ml-3 -translate-x-1 text-sm opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A] ${
+    isDarkMode ? "text-white/50" : "text-gray-500"
+  }`}
+>
+  Show all
+</Link>
             </div>
 
            {loading ? (
@@ -272,9 +311,13 @@ export default function SearchOverlay({
             )}
           </div>
 
-          <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-gray-900 transition-colors duration-200 group-hover/card:!text-[#D96A3A] dark:!text-white">
-            {post.title}
-          </h4>
+          <h4
+  className={`mt-3 line-clamp-2 text-sm font-medium leading-snug transition-colors duration-200 group-hover/card:!text-[#D96A3A] ${
+    isDarkMode ? "text-white" : "text-gray-900"
+  }`}
+>
+  {post.title}
+</h4>
 
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
             {post.contentType === "recipe"
