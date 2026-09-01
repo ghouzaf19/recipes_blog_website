@@ -79,71 +79,68 @@ export default function SearchOverlay({
     return null;
   }
 
-  return (
-    <div className="fixed inset-0 z-[100]">
-      {/* Page behind search */}
-      <div
-        className="absolute inset-0 bg-black/35 backdrop-blur-sm"
-        onClick={onClose}
-      />
+ return (
+  <div className="fixed inset-0 z-[100]">
+    {/* Blurred page/header behind */}
+    <div
+      className="absolute inset-0 bg-black/30 backdrop-blur-md"
+      onClick={onClose}
+    />
 
-      {/* Search page */}
-      <div className="relative z-10 h-full overflow-y-auto overscroll-contain bg-[#111111]/95 text-white">
-        <div className="mx-auto max-w-[1240px] px-4 pb-16 pt-5 sm:px-6 lg:px-8">
-          {/* Reduce / close arrow */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close search"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-gray-300 transition-colors duration-200 hover:bg-white/10 hover:text-white"
-            >
-              <ChevronDown className="h-7 w-7" />
-            </button>
-          </div>
+    {/* Search surface starts below header */}
+    <div className="absolute inset-x-0 top-[140px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
+      <div className="mx-auto max-w-[1240px] px-4 pb-16 pt-3 sm:px-6 lg:px-8">
 
-          {/* Search heading */}
-          <div className="mt-1 text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary">
-              Search
-            </p>
-
-            <h2 className="mt-2 font-serif text-3xl font-semibold sm:text-4xl">
-              Find something delicious
-            </h2>
-          </div>
-
-          {/* Search form */}
-          <form
-            role="search"
-            action="/blog"
-            method="GET"
-            className="relative mx-auto mt-8 max-w-4xl"
+        {/* Reduce / close arrow */}
+        <div className="-mt-14 mb-3 flex justify-center">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close search"
+            className="flex h-10 w-10 items-center justify-center text-gray-300 transition-colors hover:text-white"
           >
-            <label htmlFor="overlay-search" className="sr-only">
-              Search recipes
-            </label>
+            <ChevronDown className="h-6 w-6" />
+          </button>
+        </div>
 
-            <input
-              id="overlay-search"
-              name="q"
-              type="search"
-              autoFocus
-              autoComplete="off"
-              placeholder="Search recipes, ingredients, cooking tips..."
-              className="h-14 w-full rounded-full border border-gray-600 bg-transparent px-6 pr-16 text-white placeholder:text-gray-400 outline-none transition-all duration-200 hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/30"
-            />
+        {/* Search form */}
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
 
-            <button
-              type="submit"
-              aria-label="Search"
-              className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white transition-all duration-200 hover:bg-secondary"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-          </form>
+            const formData = new FormData(e.currentTarget);
+            const query = String(formData.get("q") || "").trim();
 
-          {/* Latest */}
+            if (!query) return;
+
+            window.location.href = `/blog?q=${encodeURIComponent(query)}`;
+          }}
+          className="relative mx-auto max-w-none"
+        >
+          <label htmlFor="overlay-search" className="sr-only">
+            Search recipes
+          </label>
+
+          <input
+            id="overlay-search"
+            name="q"
+            type="search"
+            autoFocus
+            autoComplete="off"
+            placeholder="Search..."
+            className="h-12 w-full rounded-full border border-primary bg-transparent px-5 pr-14 text-white placeholder:text-gray-400 outline-none transition focus:ring-1 focus:ring-primary"
+          />
+
+          <button
+            type="submit"
+            aria-label="Search"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 transition-colors hover:text-white"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+        </form>
+{/* Latest */}
           <section className="mt-10">
             <div className="group mb-6 flex items-center">
               <Link
