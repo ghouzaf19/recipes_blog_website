@@ -82,13 +82,13 @@ export default function SearchOverlay({
  return (
   <div className="fixed inset-0 z-[100]">
     {/* Blurred page/header behind */}
-    <div
-      className="absolute inset-0 bg-black/30 backdrop-blur-md"
-      onClick={onClose}
-    />
+<div
+  className="absolute inset-x-0 top-0 h-[145px] bg-black/10 backdrop-blur-[6px]"
+  onClick={onClose}
+/>
 
     {/* Search surface starts below header */}
-    <div className="absolute inset-x-0 top-[140px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
+    <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
       <div className="mx-auto max-w-[1240px] px-4 pb-16 pt-3 sm:px-6 lg:px-8">
 
         {/* Reduce / close arrow */}
