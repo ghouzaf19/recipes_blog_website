@@ -89,7 +89,7 @@ export default function SearchOverlay({
 
     {/* Search surface starts below header */}
     <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
-      <div className="mx-auto max-w-[1240px] px-4 pb-16 pt-3 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-0">
 
         {/* Reduce / close arrow */}
         <div className="-mt-14 mb-3 flex justify-center">
@@ -171,7 +171,7 @@ export default function SearchOverlay({
                 Loading articles...
               </p>
             ) : posts.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                 {posts.slice(0, 8).map((post) => (
                   <Link
                     key={post.id}
