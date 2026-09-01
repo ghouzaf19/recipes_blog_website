@@ -203,23 +203,23 @@ export default function SearchOverlay({
 
           {/* Latest */}
           <section className="mt-10">
-            <div className="group mb-6 flex items-center">
+            <div className="group/latest mb-6 flex items-center">
               <Link
                 href="/blog"
                 onClick={onClose}
                 className="flex items-center gap-2"
               >
-                <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-white transition-colors duration-200 group-hover:text-[#D96A3A]">
+                <h3 className="text-sm font-medium uppercase tracking-[0.2em] !text-white transition-colors duration-200 group-hover/latest:!text-[#D96A3A]">
   Latest
 </h3>
 
-                <ChevronRight className="h-4 w-4 text-white transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#A94F2B]" />
+                <ChevronRight className="h-4 w-4 !text-white transition-all duration-200 group-hover/latest:translate-x-1 group-hover/latest:!text-[#D96A3A]" />
               </Link>
 
               <Link
                 href="/blog"
                 onClick={onClose}
-                className="ml-3 -translate-x-1 text-sm text-gray-400 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 hover:text-[#A94F2B]"
+                className="ml-3 -translate-x-1 text-sm text-white/50 opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A]"
               >
                 Show all
               </Link>
@@ -233,15 +233,15 @@ export default function SearchOverlay({
               <div className="group relative">
                 {/* Left arrow */}
                 {canScrollLeft && (
-                  <button
-                    type="button"
-                    onClick={() => scrollLatest("left")}
-                    aria-label="Previous articles"
-                    className="absolute left-2 top-[55px] z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-[#A94F2B]"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                )}
+  <button
+    type="button"
+    onClick={() => scrollLatest("left")}
+    aria-label="Previous articles"
+    className="absolute left-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
+  >
+    <ChevronLeft className="h-5 w-5" />
+  </button>
+)}
 
                 {/* Posts rail */}
                 <div
@@ -254,7 +254,7 @@ export default function SearchOverlay({
                       key={post.id}
                       href={`/blog/${post.slug}`}
                       onClick={onClose}
-                      className="group w-[145px] shrink-0"
+                      className="group/card w-[145px] shrink-0"
                     >
                       <div className="relative aspect-square w-full overflow-hidden bg-gray-900">
                         {post.image ? (
@@ -266,7 +266,7 @@ export default function SearchOverlay({
                             }
                             fill
                             sizes="145px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            className="object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center text-4xl">
@@ -275,7 +275,7 @@ export default function SearchOverlay({
                         )}
                       </div>
 
-                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug text-white transition-colors duration-200 group-hover:text-[#D96A3A]">
+                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-white transition-colors duration-200 group-hover/card:!text-[#D96A3A]">
   {post.title}
 </h4>
 
