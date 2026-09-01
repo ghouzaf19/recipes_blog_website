@@ -167,17 +167,17 @@ useEffect(() => {
       : "bg-white text-gray-900"
   }`}
 >
-        <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-0">
+        <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-6 lg:px-0">
           {/* Reduce / close arrow */}
-          <div className="fixed left-1/2 top-[108px] z-[120] -translate-x-1/2">
+          <div className="fixed left-1/2 top-[72px] z-[120] -translate-x-1/2 sm:top-[92px]">
             <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close search"
-              className="flex h-10 w-10 items-center justify-center text-white/90 transition hover:text-[#A94F2B]"
-            >
-              <ChevronDown className="h-6 w-6" />
-            </button>
+  type="button"
+  onClick={onClose}
+  aria-label="Close search"
+  className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/20"
+>
+  <ChevronDown className="h-5 w-5" />
+</button>
           </div>
 
           {/* Search */}
@@ -256,9 +256,9 @@ useEffect(() => {
               <Link
   href="/blog"
   onClick={onClose}
-  className={`ml-3 -translate-x-1 text-sm opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A] ${
-    isDarkMode ? "text-white/50" : "text-gray-500"
-  }`}
+  className={`ml-3 text-sm transition-all duration-200 sm:-translate-x-1 sm:opacity-0 sm:group-hover/latest:translate-x-0 sm:group-hover/latest:opacity-100 hover:text-[#D96A3A] ${
+  isDarkMode ? "text-white/60" : "text-gray-500"
+}`}
 >
   Show all
 </Link>
@@ -276,7 +276,7 @@ useEffect(() => {
         type="button"
         onClick={() => scrollLatest("left")}
         aria-label="Previous articles"
-        className="absolute left-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
+        className="absolute left-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-100 shadow-md transition-all duration-200 hover:bg-[#D96A3A] sm:opacity-0 sm:group-hover:opacity-100"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -293,7 +293,7 @@ useEffect(() => {
           key={post.id}
           href={`/blog/${post.slug}`}
           onClick={onClose}
-          className="group/card w-[145px] shrink-0"
+          className="group/card w-[132px] shrink-0 sm:w-[145px]"
         >
           <div className="relative aspect-square w-full overflow-hidden bg-gray-900">
             {post.image ? (
@@ -301,7 +301,7 @@ useEffect(() => {
                 src={post.image.url}
                 alt={post.image.alt || post.title}
                 fill
-                sizes="145px"
+                sizes="(max-width: 640px) 132px, 145px"
                 className="object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
               />
             ) : (
@@ -334,7 +334,7 @@ useEffect(() => {
         type="button"
         onClick={() => scrollLatest("right")}
         aria-label="Next articles"
-        className="absolute right-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
+        className="absolute right-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-100 shadow-md transition-all duration-200 hover:bg-[#D96A3A] sm:opacity-0 sm:group-hover:opacity-100"
       >
         <ChevronRight className="h-5 w-5" />
       </button>
