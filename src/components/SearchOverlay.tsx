@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -91,17 +91,17 @@ export default function SearchOverlay({
     <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
       <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-0">
 
-        {/* Reduce / close arrow */}
-        <div className="-mt-14 mb-3 flex justify-center">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close search"
-            className="flex h-10 w-10 items-center justify-center text-gray-300 transition-colors hover:text-white"
-          >
-            <ChevronDown className="h-6 w-6" />
-          </button>
-        </div>
+       {/* Reduce / close arrow */}
+<div className="fixed left-1/2 top-[108px] z-[120] -translate-x-1/2">
+  <button
+    type="button"
+    onClick={onClose}
+    aria-label="Close search"
+    className="flex h-10 w-10 items-center justify-center text-white/90 transition hover:text-white"
+  >
+    <ChevronDown className="h-6 w-6" />
+  </button>
+</div>
 
         {/* Search form */}
         <form
@@ -171,42 +171,65 @@ export default function SearchOverlay({
                 Loading articles...
               </p>
             ) : posts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-                {posts.slice(0, 8).map((post) => (
-                  <Link
-                    key={post.id}
-                    href={`/blog/${post.slug}`}
-                    onClick={onClose}
-                    className="group block"
-                  >
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-900">
-                      {post.image ? (
-                        <Image
-                          src={post.image.url}
-                          alt={post.image.alt || post.title}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-4xl">
-                          🍳
-                        </div>
-                      )}
-                    </div>
+             <div className="relative">
+  <div
+    id="latest-scroll"
+    className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  >
+    {posts.slice(0, 12).map((post) => (
+      <Link
+        key={post.id}
+        href={`/blog/${post.slug}`}
+        onClick={onClose}
+        className="group w-[145px] shrink-0"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-900">
+          {post.image ? (
+            <Image
+              src={post.image.url}
+              alt={post.image.alt || post.title}
+              fill
+              sizes="145px"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-4xl">
+              🍳
+            </div>
+          )}
+        </div>
 
-                    <h4 className="mt-3 line-clamp-2 font-medium leading-snug text-white transition-colors duration-200 group-hover:text-primary">
-                      {post.title}
-                    </h4>
+        <h4 className="mt-3 line-clamp-2 font-medium leading-snug text-white transition-colors duration-200 group-hover:text-primary">
+          {post.title}
+        </h4>
 
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                      {post.contentType === "recipe"
-                        ? "Recipe"
-                        : "Cooking Guide"}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+        <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+          {post.contentType === "recipe"
+            ? "Recipe"
+            : "Cooking Guide"}
+        </p>
+      </Link>
+    ))}
+  </div>
+
+  {posts.length > 8 && (
+    <button
+      type="button"
+      aria-label="Next articles"
+      onClick={() => {
+        document
+          .getElementById("latest-scroll")
+          ?.scrollBy({
+            left: 500,
+            behavior: "smooth",
+          });
+      }}
+      className="absolute right-1 top-[55px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-primary"
+    >
+      <ChevronRight className="h-5 w-5" />
+    </button>
+  )}
+</div>
             ) : (
               <p className="py-12 text-sm text-gray-400">
                 No articles available.
