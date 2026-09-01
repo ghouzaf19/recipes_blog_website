@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -28,6 +33,30 @@ export default function SearchOverlay({
 }: SearchOverlayProps) {
   const [posts, setPosts] = useState<SearchPost[]>([]);
   const [loading, setLoading] = useState(false);
+  const latestRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+const updateLatestArrows = () => {
+  const el = latestRef.current;
+  if (!el) return;
+
+  setCanScrollLeft(el.scrollLeft > 5);
+  setCanScrollRight(
+    el.scrollLeft + el.clientWidth < el.scrollWidth - 5
+  );
+};
+
+const scrollLatest = (direction: "left" | "right") => {
+  const el = latestRef.current;
+  if (!el) return;
+
+  el.scrollBy({
+    left: direction === "right" ? 640 : -640,
+    behavior: "smooth",
+  });
+
+  window.setTimeout(updateLatestArrows, 350);
+};
 
   /*
    * Keep the original page in place while
@@ -44,6 +73,9 @@ export default function SearchOverlay({
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+if (!isOpen) {
+  return null;
+}
 
   /*
    * Load latest articles automatically.
@@ -141,102 +173,104 @@ export default function SearchOverlay({
           </button>
         </form>
 {/* Latest */}
-          <section className="mt-10">
-            <div className="group mb-6 flex items-center">
-              <Link
-                href="/blog"
-                onClick={onClose}
-                className="flex items-center gap-2"
-              >
-                <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-primary">
-                  Latest
-                </h3>
+<section className="mt-10">
+  <div className="group mb-6 flex items-center">
+    <Link
+      href="/blog"
+      onClick={onClose}
+      className="flex items-center gap-2"
+    >
+      <h3 className="text-sm font-medium uppercase tracking-[0.2em] text-white transition-colors duration-200 group-hover:text-[#A94F2B]">
+  Latest
+</h3>
 
-                <span className="text-xl leading-none text-primary transition-transform duration-200 group-hover:translate-x-1">
-                  ›
-                </span>
-              </Link>
+      <ChevronRight className="h-4 w-4 text-white transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#A94F2B]" />
+    </Link>
 
-              <Link
-                href="/blog"
-                onClick={onClose}
-                className="ml-3 text-sm text-gray-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100 hover:text-white"
-              >
-                Show all
-              </Link>
-            </div>
-
-            {loading ? (
-              <p className="py-12 text-sm text-gray-400">
-                Loading articles...
-              </p>
-            ) : posts.length > 0 ? (
-             <div className="relative">
-  <div
-    id="latest-scroll"
-    className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-  >
-    {posts.slice(0, 12).map((post) => (
-      <Link
-        key={post.id}
-        href={`/blog/${post.slug}`}
-        onClick={onClose}
-        className="group w-[145px] shrink-0"
-      >
-        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-900">
-          {post.image ? (
-            <Image
-              src={post.image.url}
-              alt={post.image.alt || post.title}
-              fill
-              sizes="145px"
-              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-4xl">
-              🍳
-            </div>
-          )}
-        </div>
-
-        <h4 className="mt-3 line-clamp-2 font-medium leading-snug text-white transition-colors duration-200 group-hover:text-primary">
-          {post.title}
-        </h4>
-
-        <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-          {post.contentType === "recipe"
-            ? "Recipe"
-            : "Cooking Guide"}
-        </p>
-      </Link>
-    ))}
+    <Link
+      href="/blog"
+      onClick={onClose}
+      className="ml-3 -translate-x-1 text-sm text-gray-400 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 hover:text-[#A94F2B]"
+    >
+      Show all
+    </Link>
   </div>
 
-  {posts.length > 8 && (
-    <button
-      type="button"
-      aria-label="Next articles"
-      onClick={() => {
-        document
-          .getElementById("latest-scroll")
-          ?.scrollBy({
-            left: 500,
-            behavior: "smooth",
-          });
-      }}
-      className="absolute right-1 top-[55px] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-primary"
-    >
-      <ChevronRight className="h-5 w-5" />
-    </button>
+  {loading ? (
+    <p className="py-12 text-sm text-gray-400">
+      Loading articles...
+    </p>
+  ) : posts.length > 0 ? (
+    <div className="relative">
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scrollLatest("left")}
+          aria-label="Previous articles"
+          className="absolute left-2 top-[55px] z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-[#A94F2B]"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      )}
+
+      <div
+        ref={latestRef}
+        onScroll={updateLatestArrows}
+        className="flex gap-4 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {posts.map((post) => (
+          <Link
+            key={post.id}
+            href={`/blog/${post.slug}`}
+            onClick={onClose}
+            className="group w-[145px] shrink-0"
+          >
+            <div className="relative aspect-square w-full overflow-hidden bg-gray-900">
+              {post.image ? (
+                <Image
+                  src={post.image.url}
+                  alt={post.image.alt || post.title}
+                  fill
+                  sizes="145px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-4xl">
+                  🍳
+                </div>
+              )}
+            </div>
+
+            <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug text-white transition-colors duration-200 group-hover:text-[#A94F2B]">
+  {post.title}
+</h4>
+
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              {post.contentType === "recipe"
+                ? "Recipe"
+                : "Cooking Guide"}
+            </p>
+          </Link>
+        ))}
+      </div>
+
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scrollLatest("right")}
+          aria-label="Next articles"
+          className="absolute right-2 top-[55px] z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/80 text-white shadow-lg transition hover:bg-[#A94F2B]"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      )}
+    </div>
+  ) : (
+    <p className="py-12 text-sm text-gray-400">
+      No articles available.
+    </p>
   )}
-</div>
-            ) : (
-              <p className="py-12 text-sm text-gray-400">
-                No articles available.
-              </p>
-            )}
-          </section>
-        </div>
+</section>        </div>
       </div>
     </div>
   );
