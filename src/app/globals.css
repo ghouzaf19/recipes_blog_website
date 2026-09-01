@@ -138,8 +138,6 @@ h3 {
 .wp-content a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 .wp-content img { height: auto; max-width: 100%; border-radius: 1rem; }
 .wp-content blockquote { border-left: 4px solid var(--primary); padding-left: 1.25rem; font-style: italic; }
-.wp-content table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; }
-.wp-content th, .wp-content td { border: 1px solid #e5e7eb; padding: .75rem; text-align: left; }
 
 /* Image hover effects */
 .food-image-hover {

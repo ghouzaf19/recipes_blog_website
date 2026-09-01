@@ -42,11 +42,13 @@ function PostImage({
   priority = false,
   sizes,
   className = "",
+  quality = 75,
 }: {
   post: PostCard;
   priority?: boolean;
   sizes: string;
   className?: string;
+  quality?: number;
 }) {
   const src = imageUrl(post);
 
@@ -64,6 +66,8 @@ function PostImage({
       alt={imageAlt(post)}
       fill
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
+      quality={quality}
       sizes={sizes}
       className={`object-cover ${className}`}
     />
@@ -236,11 +240,12 @@ export default async function Home() {
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                   <PostImage
-                    post={featuredPost}
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="transition-transform duration-700 group-hover:scale-[1.03]"
-                  />
+  post={featuredPost}
+  priority
+  quality={70}
+  sizes="(max-width: 1024px) 100vw, 60vw"
+  className="transition-transform duration-700 group-hover:scale-[1.03]"
+/>
                 </div>
 
                 <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#A94F2B]">

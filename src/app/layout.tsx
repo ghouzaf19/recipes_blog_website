@@ -13,14 +13,8 @@ import './globals.css';
 const serif = Cormorant_Garamond({
   variable: '--font-serif',
   subsets: ['latin'],
-  weight: [
-    '300',
-    '400',
-    '500',
-    '600',
-    '700',
-  ],
-  style: ['normal', 'italic'],
+  weight: ['600'],
+  style: ['normal'],
 });
 
 const sans = Outfit({
