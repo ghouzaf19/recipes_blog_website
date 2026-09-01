@@ -64,6 +64,7 @@ export default function Header() {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Close desktop dropdown when clicking outside
   useEffect(() => {
@@ -167,17 +168,56 @@ export default function Header() {
 
 {/* Right: mobile search */}
 <div className="flex items-center gap-4 lg:hidden">
-  <Link
-    href="/blog"
+  <button
+    type="button"
     aria-label="Search recipes"
+    aria-expanded={isSearchOpen}
+    onClick={() => setIsSearchOpen(!isSearchOpen)}
     className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 hover:bg-primary hover:text-white"
   >
-    <Search className="h-6 w-6" />
-  </Link>
+    {isSearchOpen ? (
+      <X className="h-6 w-6" />
+    ) : (
+      <Search className="h-6 w-6" />
+    )}
+  </button>
 </div>
 </div>
 </div>
-        {/* Desktop navigation */}
+{isSearchOpen && (
+  <div className="border-t border-gray-200 bg-white shadow-lg">
+    <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
+      <form
+        role="search"
+        action="/blog"
+        method="GET"
+        className="relative mx-auto max-w-4xl"
+      >
+        <label htmlFor="header-search" className="sr-only">
+          Search CookeTricks
+        </label>
+
+        <input
+          id="header-search"
+          name="q"
+          type="search"
+          autoFocus
+          placeholder="Search recipes, ingredients, cooking tips..."
+          className="h-14 w-full rounded-full border border-primary bg-white px-6 pr-16 text-gray-900 placeholder:text-gray-400 outline-none transition focus:ring-2 focus:ring-primary/20"
+        />
+
+        <button
+          type="submit"
+          aria-label="Search"
+          className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white transition hover:bg-secondary"
+        >
+          <Search className="h-5 w-5" />
+        </button>
+      </form>
+    </div>
+  </div>
+)}        
+{/* Desktop navigation */}
         <nav
           ref={menuRef}
           aria-label="Main navigation"
