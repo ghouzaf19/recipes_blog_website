@@ -73,6 +73,14 @@ export default function SearchOverlay({
 
   return (
     <div className="fixed inset-0 z-[100]">
+ {/* Background page blur */}
+  <div
+    className="absolute inset-0 bg-black/35 backdrop-blur-sm"
+    onClick={onClose}
+  />
+
+  {/* Search layer */}
+  <div className="relative z-10 h-full overflow-y-auto bg-[#111111]/95 text-white">
       {/* Blurred page behind */}
       <button
         type="button"
@@ -141,19 +149,21 @@ export default function SearchOverlay({
 
             {/* Latest */}
             <section className="mt-10">
-              <div className="mb-5 flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">
-                  Latest
-                </h3>
+              <div className="group mb-5 flex items-center gap-4">
+  <h3 className="shrink-0 text-sm font-bold uppercase tracking-[0.2em] text-primary">
+    Latest
+  </h3>
 
-                <Link
-                  href="/blog"
-                  onClick={onClose}
-                  className="text-sm text-gray-400 transition hover:text-white"
-                >
-                  Show all
-                </Link>
-              </div>
+  <div className="h-px flex-1 bg-white/10 transition-colors duration-300 group-hover:bg-primary/40" />
+
+  <Link
+    href="/blog"
+    onClick={onClose}
+    className="shrink-0 text-sm text-gray-400 opacity-0 transition-all duration-300 group-hover:opacity-100 hover:text-white"
+  >
+    Show all
+  </Link>
+</div>
 
               {loading ? (
                 <p className="py-12 text-center text-gray-400">
@@ -201,5 +211,6 @@ export default function SearchOverlay({
         </div>
       </div>
     </div>
+</div>
   );
 }
