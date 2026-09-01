@@ -141,7 +141,7 @@ export default function SearchOverlay({
       />
 
       {/* Search surface */}
-      <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-[#111111] text-white">
+      <div className="absolute inset-x-0 top-[145px] bottom-0 z-10 overflow-y-auto bg-white text-gray-900 dark:bg-[#111111] dark:text-white">
         <div className="mx-auto w-full max-w-[1195px] px-4 pb-16 pt-3 sm:px-0">
           {/* Reduce / close arrow */}
           <div className="fixed left-1/2 top-[108px] z-[120] -translate-x-1/2">
@@ -189,7 +189,7 @@ export default function SearchOverlay({
               autoFocus
               autoComplete="off"
               placeholder="Search..."
-              className="h-12 w-full rounded-full border border-[#A94F2B] bg-transparent px-5 pr-14 text-white placeholder:text-gray-400 outline-none transition focus:ring-1 focus:ring-[#A94F2B]"
+              className="h-12 w-full rounded-full border border-[#A94F2B] bg-transparent px-5 pr-14 text-gray-900 placeholder:text-gray-500 outline-none transition focus:ring-1 focus:ring-[#A94F2B] dark:text-white dark:placeholder:text-gray-400"
             />
 
             <button
@@ -209,11 +209,11 @@ export default function SearchOverlay({
                 onClick={onClose}
                 className="flex items-center gap-2"
               >
-                <h3 className="text-sm font-medium uppercase tracking-[0.2em] !text-white transition-colors duration-200 group-hover/latest:!text-[#D96A3A]">
+                <h3 className="text-sm font-medium uppercase tracking-[0.2em] !text-gray-900 transition-colors duration-200 group-hover/latest:!text-[#D96A3A] dark:!text-white">
   Latest
 </h3>
 
-                <ChevronRight className="h-4 w-4 !text-white transition-all duration-200 group-hover/latest:translate-x-1 group-hover/latest:!text-[#D96A3A]" />
+                <ChevronRight className="h-4 w-4 !text-gray-900 transition-all duration-200 group-hover/latest:translate-x-1 group-hover/latest:!text-[#D96A3A] dark:!text-white" />
               </Link>
 
               <Link
@@ -275,7 +275,7 @@ export default function SearchOverlay({
                         )}
                       </div>
 
-                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-white transition-colors duration-200 group-hover/card:!text-[#D96A3A]">
+                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-gray-900 transition-colors duration-200 group-hover/card:!text-[#D96A3A] dark:!text-white">
   {post.title}
 </h4>
 
