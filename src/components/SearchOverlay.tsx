@@ -219,93 +219,90 @@ export default function SearchOverlay({
               <Link
                 href="/blog"
                 onClick={onClose}
-                className="ml-3 -translate-x-1 text-sm text-white/50 opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A]"
+                className="ml-3 -translate-x-1 text-sm text-gray-500 opacity-0 transition-all duration-200 group-hover/latest:translate-x-0 group-hover/latest:opacity-100 hover:text-[#D96A3A] dark:text-white/50"
               >
                 Show all
               </Link>
             </div>
 
-            {loading ? (
-              <p className="py-12 text-sm text-gray-400">
-                Loading articles...
-              </p>
-            ) : posts.length > 0 ? (
-              <div className="group relative">
-                {/* Left arrow */}
-                {canScrollLeft && (
-  <button
-    type="button"
-    onClick={() => scrollLatest("left")}
-    aria-label="Previous articles"
-    className="absolute left-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
-  >
-    <ChevronLeft className="h-5 w-5" />
-  </button>
-)}
+           {loading ? (
+  <p className="py-12 text-sm text-gray-400">
+    Loading articles...
+  </p>
+) : posts.length > 0 ? (
+  <div className="group relative">
+    {/* Left arrow */}
+    {canScrollLeft && (
+      <button
+        type="button"
+        onClick={() => scrollLatest("left")}
+        aria-label="Previous articles"
+        className="absolute left-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+    )}
 
-                {/* Posts rail */}
-                <div
-                  ref={latestRef}
-                  onScroll={updateLatestArrows}
-                  className="flex gap-4 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  {posts.map((post) => (
-                    <Link
-                      key={post.id}
-                      href={`/blog/${post.slug}`}
-                      onClick={onClose}
-                      className="group/card w-[145px] shrink-0"
-                    >
-                      <div className="relative aspect-square w-full overflow-hidden bg-gray-900">
-                        {post.image ? (
-                          <Image
-                            src={post.image.url}
-                            alt={
-                              post.image.alt ||
-                              post.title
-                            }
-                            fill
-                            sizes="145px"
-                            className="object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-4xl">
-                            🍳
-                          </div>
-                        )}
-                      </div>
-
-                      <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-gray-900 transition-colors duration-200 group-hover/card:!text-[#D96A3A] dark:!text-white">
-  {post.title}
-</h4>
-
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
-                        {post.contentType === "recipe"
-                          ? "Recipe"
-                          : "Cooking Guide"}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Right arrow */}
-               {canScrollRight && (
-  <button
-    type="button"
-    onClick={() => scrollLatest("right")}
-    aria-label="Next articles"
-    className="absolute right-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 hover:bg-[#D96A3A] group-hover:opacity-100"
-  >
-    <ChevronRight className="h-5 w-5" />
-  </button>
-)}
-              </div>
+    {/* Posts rail */}
+    <div
+      ref={latestRef}
+      onScroll={updateLatestArrows}
+      className="flex gap-4 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {posts.map((post) => (
+        <Link
+          key={post.id}
+          href={`/blog/${post.slug}`}
+          onClick={onClose}
+          className="group/card w-[145px] shrink-0"
+        >
+          <div className="relative aspect-square w-full overflow-hidden bg-gray-900">
+            {post.image ? (
+              <Image
+                src={post.image.url}
+                alt={post.image.alt || post.title}
+                fill
+                sizes="145px"
+                className="object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
+              />
             ) : (
-              <p className="py-12 text-sm text-gray-400">
-                No articles available.
-              </p>
+              <div className="flex h-full items-center justify-center text-4xl">
+                🍳
+              </div>
             )}
-          </section>
+          </div>
+
+          <h4 className="mt-3 line-clamp-2 text-sm font-medium leading-snug !text-gray-900 transition-colors duration-200 group-hover/card:!text-[#D96A3A] dark:!text-white">
+            {post.title}
+          </h4>
+
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+            {post.contentType === "recipe"
+              ? "Recipe"
+              : "Cooking Guide"}
+          </p>
+        </Link>
+      ))}
+    </div>
+
+    {/* Right arrow */}
+    {canScrollRight && (
+      <button
+        type="button"
+        onClick={() => scrollLatest("right")}
+        aria-label="Next articles"
+        className="absolute right-2 top-[72px] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-[#A94F2B] text-white opacity-0 shadow-md transition-all duration-200 group-hover:opacity-100 hover:bg-[#D96A3A]"
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    )}
+  </div>
+) : (
+  <p className="py-12 text-sm text-gray-400">
+    No articles available.
+  </p>
+)}
+</section>
         </div>
       </div>
     </div>
