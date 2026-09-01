@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Search, Menu, ChevronDown, Utensils, X } from "lucide-react";
-
+import SearchOverlay from "@/components/SearchOverlay";
 const navItems = [
   {
     name: "Dinners",
@@ -173,39 +173,10 @@ export default function Header() {
 </div>
 </div>
 </div>
-{isSearchOpen && (
-  <div className="border-t border-gray-200 bg-white shadow-lg">
-    <div className="mx-auto max-w-[1240px] px-4 py-8 sm:px-6 lg:px-8">
-      <form
-        role="search"
-        action="/blog"
-        method="GET"
-        className="relative mx-auto max-w-4xl"
-      >
-        <label htmlFor="header-search" className="sr-only">
-          Search CookeTricks
-        </label>
-
-        <input
-          id="header-search"
-          name="q"
-          type="search"
-          autoFocus
-          placeholder="Search recipes, ingredients, cooking tips..."
-          className="h-14 w-full rounded-full border border-primary bg-white px-6 pr-16 text-gray-900 placeholder:text-gray-400 outline-none transition focus:ring-2 focus:ring-primary/20"
-        />
-
-        <button
-          type="submit"
-          aria-label="Search"
-          className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-white transition hover:bg-secondary"
-        >
-          <Search className="h-5 w-5" />
-        </button>
-      </form>
-    </div>
-  </div>
-)}        
+<SearchOverlay
+  isOpen={isSearchOpen}
+  onClose={() => setIsSearchOpen(false)}
+/>
 {/* Desktop navigation */}
         <nav
           ref={menuRef}
