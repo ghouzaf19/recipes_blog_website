@@ -297,6 +297,12 @@ function structuredData(post: BlogPost) {
       post.data.taxonomies.mealTypes
         .map((term) => term.name)
         .join(', ') || undefined,
+    keywords: [
+      post.title,
+      ...post.data.taxonomies.categories.map((term) => term.name),
+      ...post.data.taxonomies.mealTypes.map((term) => term.name),
+      ...post.data.taxonomies.cuisines.map((term) => term.name),
+    ].filter(Boolean).join(', '),
 
     recipeIngredient: recipe.ingredients,
 
@@ -304,6 +310,7 @@ function structuredData(post: BlogPost) {
       recipe.instructions.map((step) => ({
         '@type': 'HowToStep',
         position: step.position,
+        name: `Step ${step.position}`,
         text: step.text,
       })),
 
@@ -557,12 +564,6 @@ export default async function BlogPostPage({
         )}
 
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
-         {post.contentHtml && (
-  <SafeHtml
-    html={post.contentHtml}
-    className="wp-content mb-16"
-  />
-)}
 
 {post.contentHtml && (
   <SafeHtml
