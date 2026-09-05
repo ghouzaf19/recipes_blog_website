@@ -208,14 +208,43 @@ h3 {
   }
 }
 .wp-content table {
-  display: block;
+  display: table;
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   border-collapse: collapse;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
 }
 
 .wp-content table th,
 .wp-content table td {
+  border: 1px solid #d1d5db;
+  padding: 14px 16px;
+  text-align: center;
+  vertical-align: middle;
   white-space: nowrap;
+}
+
+.wp-content table th {
+  background: #f5eee8;
+  color: #2c2c2c;
+  font-weight: 700;
+}
+
+.wp-content table td {
+  color: #374151;
+}
+
+@media (max-width: 640px) {
+  .wp-content table {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .wp-content table th,
+  .wp-content table td {
+    padding: 12px 8px;
+    font-size: 0.95rem;
+    white-space: normal;
+  }
 }
