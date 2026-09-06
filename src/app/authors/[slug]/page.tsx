@@ -6,7 +6,8 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import Header from '@/components/Header';
 
 import {
-  getAllPosts,
+  getAuthorBySlug,
+  getPostsByAuthor,
   safeJsonLd,
   type BlogPost,
   type WPAuthor,
@@ -52,40 +53,41 @@ async function loadAuthorPageData(
   const canonicalSlug = canonicalAuthorSlug(slug);
   const isEditorialAuthor =
     canonicalSlug === EDITORIAL_AUTHOR_SLUG;
-  let allPosts: BlogPost[] = [];
+  let wordpressAuthor: WPAuthor | null = null;
+  let posts: BlogPost[] = [];
 
   try {
-    allPosts = await getAllPosts();
+    wordpressAuthor = await getAuthorBySlug(canonicalSlug);
+
+    if (!wordpressAuthor && isEditorialAuthor) {
+      wordpressAuthor = await getAuthorBySlug(
+        LEGACY_EDITORIAL_AUTHOR_SLUG,
+      );
+    }
+
+    if (wordpressAuthor) {
+      posts = await getPostsByAuthor(wordpressAuthor.id);
+    }
   } catch (error) {
     console.error(
-      'WordPress author posts could not load:',
+      'WordPress author data could not load:',
       error,
     );
+    wordpressAuthor = null;
+    posts = [];
   }
 
-  const posts = allPosts.filter(
-    (post) =>
-      post.data.author &&
-      (isEditorialAuthor
-        ? canonicalAuthorSlug(post.data.author.slug) ===
-          EDITORIAL_AUTHOR_SLUG
-        : post.data.author.slug === canonicalSlug),
-  );
+  const postAuthor = posts[0]?.data.author ?? null;
 
-  const wordpressAuthor =
-    posts[0]?.data.author ?? null;
-
-  const author = wordpressAuthor
-    ? isEditorialAuthor
+  const author = isEditorialAuthor
+    ? posts.length > 0
       ? {
-          ...wordpressAuthor,
+          ...(postAuthor ?? wordpressAuthor ?? EDITORIAL_AUTHOR),
           slug: EDITORIAL_AUTHOR_SLUG,
           url: `${SITE_URL}/authors/${EDITORIAL_AUTHOR_SLUG}`,
         }
-      : wordpressAuthor
-    : isEditorialAuthor
-      ? EDITORIAL_AUTHOR
-      : null;
+      : EDITORIAL_AUTHOR
+    : postAuthor ?? wordpressAuthor;
 
   if (!author) {
     return null;
