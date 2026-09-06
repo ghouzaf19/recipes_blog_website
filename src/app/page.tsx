@@ -40,6 +40,18 @@ function contentLabel(post: PostCard) {
   return "Cooking Guide";
 }
 
+function postsFromResult(
+  section: string,
+  result: PromiseSettledResult<PostCard[]>,
+): PostCard[] {
+  if (result.status === "fulfilled") return result.value;
+
+  const category =
+    result.reason instanceof Error ? result.reason.name : "UnknownError";
+  console.error(`Homepage WordPress fetch failed for ${section}: ${category}`);
+  return [];
+}
+
 function PostImage({
   post,
   priority = false,
@@ -147,38 +159,22 @@ function SectionHeading({
 }
 
 export default async function Home() {
-  let latestPosts: PostCard[] = [];
-  let chickenPosts: PostCard[] = [];
-  let dinnerPosts: PostCard[] = [];
-  let airFryerPosts: PostCard[] = [];
-  let guides: PostCard[] = [];
-
-  try {
-    const [
-      latest,
-      chicken,
-      dinner,
-      airFryer,
-      guidePool,
-    ] = await Promise.all([
-      getPosts({ perPage: 9 }),
+  const [recentResult, chickenResult, dinnerResult, airFryerResult] =
+    await Promise.allSettled([
+      getPosts({ perPage: 30 }),
       getPosts({ category: "chicken", perPage: 8 }),
       getPosts({ mealType: "dinner", perPage: 8 }),
       getPosts({ search: "air fryer", perPage: 8 }),
-      getPosts({ perPage: 30 }),
     ]);
 
-    latestPosts = latest;
-    chickenPosts = chicken;
-    dinnerPosts = dinner;
-    airFryerPosts = airFryer;
-
-    guides = guidePool
-      .filter((post) => post.data.contentType === "article")
-      .slice(0, 4);
-  } catch (error) {
-    console.error("Homepage WordPress fetch failed:", error);
-  }
+  const recentPosts = postsFromResult("latest posts and guides", recentResult);
+  const latestPosts = recentPosts.slice(0, 9);
+  const chickenPosts = postsFromResult("chicken", chickenResult);
+  const dinnerPosts = postsFromResult("dinner", dinnerResult);
+  const airFryerPosts = postsFromResult("air fryer", airFryerResult);
+  const guides = recentPosts
+    .filter((post) => post.data.contentType === "article")
+    .slice(0, 4);
 
   const featuredPost = latestPosts[0] ?? chickenPosts[0] ?? null;
   const latestGrid = latestPosts
