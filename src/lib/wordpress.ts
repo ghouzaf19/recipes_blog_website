@@ -35,19 +35,6 @@ export interface CookeTricksData {
   };
 }
 
-interface RawPost {
-  id: number;
-  date: string;
-  modified: string;
-  slug: string;
-  status: string;
-  link: string;
-  title: { rendered: string };
-  excerpt: { rendered: string };
-  content: { rendered: string; protected: boolean };
-  cooketricks?: CookeTricksData;
-}
-
 export interface BlogPost {
   id: number;
   slug: string;
@@ -72,27 +59,324 @@ export interface PostFilters {
   page?: number;
 }
 
-const EMPTY_DATA: CookeTricksData = {
-  contentType: 'article', featuredImage: null, socialImage: null, author: null,
-  taxonomies: { categories: [], tags: [], cuisines: [], mealTypes: [], occasions: [], diets: [] },
-  recipe: { difficulty: null, prepTime: null, cookTime: null, additionalTime: null, totalTime: null, servings: null, yield: null, ingredientGroups: [], ingredients: [], instructions: [], equipment: [], substitutions: [], storageNotes: null, safetyNotes: null, testedDate: null, testedBy: null, testNotes: null, nutrition: null, nutritionVerified: false },
-  transparency: { imageCreator: null, imageSource: null, aiDisclosure: null },
-  seo: { title: null, description: null, canonicalUrl: null, focusTopic: null, searchIntent: null, sources: [], informationGain: null, lastReviewed: null },
-};
+const WORDPRESS_FETCH_TIMEOUT_MS = 10_000;
+
+type WordPressErrorCategory =
+  | 'timeout'
+  | 'http'
+  | 'invalid-json'
+  | 'malformed-response'
+  | 'network';
+
+class WordPressError extends Error {
+  readonly category: WordPressErrorCategory;
+  readonly status?: number;
+
+  constructor(
+    category: WordPressErrorCategory,
+    path: string,
+    options: { status?: number } = {},
+  ) {
+    const resource = path.split('?', 1)[0] || '/';
+    const statusText = options.status
+      ? ` (${options.status})`
+      : '';
+
+    super(`WordPress ${category} error${statusText}: ${resource}`);
+    this.name = 'WordPressError';
+    this.category = category;
+    this.status = options.status;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function nonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim()
+    ? value
+    : null;
+}
+
+function nullableString(value: unknown): string | null {
+  return nonEmptyString(value);
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : null;
+}
+
+function positiveInteger(value: unknown): number | null {
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value > 0
+    ? value
+    : null;
+}
+
+function nonNegativeInteger(value: unknown): number | null {
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= 0
+    ? value
+    : null;
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is string => nonEmptyString(item) !== null,
+      )
+    : [];
+}
+
+function normalizeImage(value: unknown): WPImage | null {
+  if (!isRecord(value)) return null;
+
+  const id = nonNegativeInteger(value.id);
+  const url = nonEmptyString(value.url);
+  const width = finiteNumber(value.width);
+  const height = finiteNumber(value.height);
+
+  if (
+    id === null ||
+    url === null ||
+    width === null ||
+    width < 0 ||
+    height === null ||
+    height < 0
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    url,
+    width,
+    height,
+    alt: typeof value.alt === 'string' ? value.alt : '',
+    caption: nullableString(value.caption),
+  };
+}
+
+function normalizeAuthor(value: unknown): WPAuthor | null {
+  if (!isRecord(value)) return null;
+
+  const id = positiveInteger(value.id);
+  const name = nonEmptyString(value.name);
+  const slug = nonEmptyString(value.slug);
+
+  if (id === null || name === null || slug === null) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    slug,
+    description: nonEmptyString(value.description) ?? undefined,
+    url: nonEmptyString(value.url) ?? undefined,
+    avatar: nullableString(value.avatar),
+  };
+}
+
+function normalizeTerm(value: unknown): WPTerm | null {
+  if (!isRecord(value)) return null;
+
+  const id = positiveInteger(value.id);
+  const name = nonEmptyString(value.name);
+  const slug = nonEmptyString(value.slug);
+
+  return id !== null && name !== null && slug !== null
+    ? { id, name, slug }
+    : null;
+}
+
+function normalizeTerms(value: unknown): WPTerm[] {
+  if (!Array.isArray(value)) return [];
+
+  const terms: WPTerm[] = [];
+
+  for (const item of value) {
+    const term = normalizeTerm(item);
+    if (term) terms.push(term);
+  }
+
+  return terms;
+}
+
+function normalizeIngredientGroups(value: unknown): IngredientGroup[] {
+  if (!Array.isArray(value)) return [];
+
+  const groups: IngredientGroup[] = [];
+
+  for (const item of value) {
+    if (!isRecord(item)) continue;
+
+    groups.push({
+      name: typeof item.name === 'string' ? item.name : '',
+      items: stringArray(item.items),
+    });
+  }
+
+  return groups;
+}
+
+function normalizeInstructions(value: unknown): InstructionStep[] {
+  if (!Array.isArray(value)) return [];
+
+  const instructions: InstructionStep[] = [];
+
+  for (const item of value) {
+    if (!isRecord(item)) continue;
+
+    const position = positiveInteger(item.position);
+    const text = nonEmptyString(item.text);
+
+    if (position !== null && text !== null) {
+      instructions.push({ position, text });
+    }
+  }
+
+  return instructions;
+}
+
+function normalizeNutrition(value: unknown): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+  return { ...value };
+}
+
+function normalizeRecipe(value: unknown): CookeTricksData['recipe'] {
+  const recipe = isRecord(value) ? value : {};
+  const difficulty =
+    recipe.difficulty === 'easy' ||
+    recipe.difficulty === 'medium' ||
+    recipe.difficulty === 'hard'
+      ? recipe.difficulty
+      : null;
+
+  return {
+    difficulty,
+    prepTime: finiteNumber(recipe.prepTime),
+    cookTime: finiteNumber(recipe.cookTime),
+    additionalTime: finiteNumber(recipe.additionalTime),
+    totalTime: finiteNumber(recipe.totalTime),
+    servings: finiteNumber(recipe.servings),
+    yield: nullableString(recipe.yield),
+    ingredientGroups: normalizeIngredientGroups(recipe.ingredientGroups),
+    ingredients: stringArray(recipe.ingredients),
+    instructions: normalizeInstructions(recipe.instructions),
+    equipment: stringArray(recipe.equipment),
+    substitutions: stringArray(recipe.substitutions),
+    storageNotes: nullableString(recipe.storageNotes),
+    safetyNotes: nullableString(recipe.safetyNotes),
+    testedDate: nullableString(recipe.testedDate),
+    testedBy: nullableString(recipe.testedBy),
+    testNotes: nullableString(recipe.testNotes),
+    nutrition: normalizeNutrition(recipe.nutrition),
+    nutritionVerified: recipe.nutritionVerified === true,
+  };
+}
+
+function normalizeCookeTricksData(value: unknown): CookeTricksData {
+  const data = isRecord(value) ? value : {};
+  const taxonomies = isRecord(data.taxonomies)
+    ? data.taxonomies
+    : {};
+  const transparency = isRecord(data.transparency)
+    ? data.transparency
+    : {};
+  const seo = isRecord(data.seo) ? data.seo : {};
+
+  return {
+    contentType: data.contentType === 'recipe' ? 'recipe' : 'article',
+    featuredImage: normalizeImage(data.featuredImage),
+    socialImage: normalizeImage(data.socialImage),
+    author: normalizeAuthor(data.author),
+    taxonomies: {
+      categories: normalizeTerms(taxonomies.categories),
+      tags: normalizeTerms(taxonomies.tags),
+      cuisines: normalizeTerms(taxonomies.cuisines),
+      mealTypes: normalizeTerms(taxonomies.mealTypes),
+      occasions: normalizeTerms(taxonomies.occasions),
+      diets: normalizeTerms(taxonomies.diets),
+    },
+    recipe: normalizeRecipe(data.recipe),
+    transparency: {
+      imageCreator: nullableString(transparency.imageCreator),
+      imageSource: nullableString(transparency.imageSource),
+      aiDisclosure: nullableString(transparency.aiDisclosure),
+    },
+    seo: {
+      title: nullableString(seo.title),
+      description: nullableString(seo.description),
+      canonicalUrl: nullableString(seo.canonicalUrl),
+      focusTopic: nullableString(seo.focusTopic),
+      searchIntent: nullableString(seo.searchIntent),
+      sources: stringArray(seo.sources),
+      informationGain: nullableString(seo.informationGain),
+      lastReviewed: nullableString(seo.lastReviewed),
+    },
+  };
+}
 
 function decodeEntities(value: string): string {
   return value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
 }
 
-function normalize(raw: RawPost): BlogPost {
+function renderedString(value: unknown): string {
+  return isRecord(value) && typeof value.rendered === 'string'
+    ? value.rendered
+    : '';
+}
+
+function normalizePost(raw: unknown): BlogPost | null {
+  if (!isRecord(raw)) return null;
+
+  const id = positiveInteger(raw.id);
+  const slug = nonEmptyString(raw.slug);
+
+  if (id === null || slug === null) return null;
+
   return {
-    id: raw.id, slug: raw.slug, status: raw.status,
-    title: decodeEntities(raw.title?.rendered ?? ''),
-    excerpt: decodeEntities(raw.excerpt?.rendered ?? ''),
-    contentHtml: raw.content?.rendered ?? '',
-    publishedAt: raw.date, modifiedAt: raw.modified,
-    data: raw.cooketricks ?? EMPTY_DATA,
+    id,
+    slug,
+    status: typeof raw.status === 'string' ? raw.status : '',
+    title: decodeEntities(renderedString(raw.title)),
+    excerpt: decodeEntities(renderedString(raw.excerpt)),
+    contentHtml: renderedString(raw.content),
+    publishedAt: typeof raw.date === 'string' ? raw.date : '',
+    modifiedAt: typeof raw.modified === 'string' ? raw.modified : '',
+    data: normalizeCookeTricksData(raw.cooketricks),
   };
+}
+
+function normalizePostList(value: unknown, path: string): BlogPost[] {
+  if (!Array.isArray(value)) {
+    throw new WordPressError('malformed-response', path);
+  }
+
+  const posts: BlogPost[] = [];
+  let skipped = 0;
+
+  for (const item of value) {
+    const post = normalizePost(item);
+
+    if (post) posts.push(post);
+    else skipped += 1;
+  }
+
+  if (skipped > 0) {
+    const resource = path.split('?', 1)[0] || '/';
+    console.warn(
+      `[wordpress:malformed-response] Skipped ${skipped} post(s) from ${resource}.`,
+    );
+  }
+
+  return posts;
 }
 
 function authHeader(): string | undefined {
@@ -101,25 +385,70 @@ function authHeader(): string | undefined {
   return user && password ? `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}` : undefined;
 }
 
-async function wpFetch<T>(path: string, options: { preview?: boolean; tags?: string[]; revalidate?: number } = {}): Promise<T> {
+async function wpFetch(path: string, options: { preview?: boolean; tags?: string[]; revalidate?: number } = {}): Promise<unknown> {
   const headers: HeadersInit = { Accept: 'application/json' };
   if (options.preview) {
     const authorization = authHeader();
     if (!authorization) throw new Error('WordPress preview credentials are not configured.');
     headers.Authorization = authorization;
   }
-  const response = await fetch(`${API_URL}${path}`, {
-    headers,
-    cache: options.preview ? 'no-store' : undefined,
-    next: options.preview ? undefined : { revalidate: options.revalidate ?? 300, tags: options.tags ?? ['blog-index'] },
-  });
-  if (!response.ok) throw new Error(`WordPress API ${response.status}: ${path}`);
-  return response.json() as Promise<T>;
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    WORDPRESS_FETCH_TIMEOUT_MS,
+  );
+
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      headers,
+      signal: controller.signal,
+      cache: options.preview ? 'no-store' : undefined,
+      next: options.preview ? undefined : { revalidate: options.revalidate ?? 300, tags: options.tags ?? ['blog-index'] },
+    });
+
+    if (!response.ok) {
+      throw new WordPressError('http', path, {
+        status: response.status,
+      });
+    }
+
+    try {
+      return await response.json() as unknown;
+    } catch {
+      if (controller.signal.aborted) {
+        throw new WordPressError('timeout', path);
+      }
+
+      throw new WordPressError('invalid-json', path);
+    }
+  } catch (error) {
+    if (error instanceof WordPressError) throw error;
+
+    if (controller.signal.aborted) {
+      throw new WordPressError('timeout', path);
+    }
+
+    throw new WordPressError('network', path);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function termId(restBase: 'categories' | 'tags' | 'cuisine' | 'meal-type' | 'occasion' | 'diet', slug: string): Promise<number | null> {
-  const terms = await wpFetch<Array<{ id: number }>>(`/${restBase}?slug=${encodeURIComponent(slug)}&per_page=1`, { tags: [`term:${restBase}:${slug}`], revalidate: 3600 });
-  return terms[0]?.id ?? null;
+  const path = `/${restBase}?slug=${encodeURIComponent(slug)}&per_page=1`;
+  const value = await wpFetch(path, { tags: [`term:${restBase}:${slug}`], revalidate: 3600 });
+
+  if (!Array.isArray(value)) {
+    throw new WordPressError('malformed-response', path);
+  }
+
+  for (const item of value) {
+    if (!isRecord(item)) continue;
+    const id = positiveInteger(item.id);
+    if (id !== null) return id;
+  }
+
+  return null;
 }
 
 export async function getPosts(filters: PostFilters = {}): Promise<BlogPost[]> {
@@ -131,19 +460,26 @@ export async function getPosts(filters: PostFilters = {}): Promise<BlogPost[]> {
   if (filters.mealType) { const id = await termId('meal-type', filters.mealType); if (!id) return []; params.set('meal-type', String(id)); }
   if (filters.occasion) { const id = await termId('occasion', filters.occasion); if (!id) return []; params.set('occasion', String(id)); }
   if (filters.diet) { const id = await termId('diet', filters.diet); if (!id) return []; params.set('diet', String(id)); }
-  const posts = await wpFetch<RawPost[]>(`/posts?${params.toString()}`, { tags: ['blog-index'], revalidate: 300 });
-  return posts.map(normalize);
+  const path = `/posts?${params.toString()}`;
+  const value = await wpFetch(path, { tags: ['blog-index'], revalidate: 300 });
+  return normalizePostList(value, path);
 }
 
 export async function getPostBySlug(slug: string, preview = false): Promise<BlogPost | null> {
   const params = new URLSearchParams({ slug, per_page: '1', context: preview ? 'edit' : 'view' });
   if (preview) params.set('status', 'draft,pending,future,publish,private');
-  const posts = await wpFetch<RawPost[]>(`/posts?${params.toString()}`, { preview, tags: ['post', `post:${slug}`], revalidate: 300 });
-  return posts[0] ? normalize(posts[0]) : null;
+  const path = `/posts?${params.toString()}`;
+  const value = await wpFetch(path, { preview, tags: ['post', `post:${slug}`], revalidate: 300 });
+  return normalizePostList(value, path)[0] ?? null;
 }
 
 export async function getPreviewPostById(id: number): Promise<BlogPost | null> {
-  try { return normalize(await wpFetch<RawPost>(`/posts/${id}?context=edit`, { preview: true })); }
+  try {
+    const path = `/posts/${id}?context=edit`;
+    const post = normalizePost(await wpFetch(path, { preview: true }));
+    if (!post) throw new WordPressError('malformed-response', path);
+    return post;
+  }
   catch { return null; }
 }
 
