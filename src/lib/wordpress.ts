@@ -66,26 +66,43 @@ type WordPressErrorCategory =
   | 'http'
   | 'invalid-json'
   | 'malformed-response'
+  | 'incomplete-fetch'
   | 'network';
+
+interface WordPressFetchResult {
+  value: unknown;
+  headers: Headers;
+}
+
+interface PaginatedPostsResult {
+  posts: BlogPost[];
+  currentPage: number;
+  totalPosts: number;
+  totalPages: number;
+}
 
 class WordPressError extends Error {
   readonly category: WordPressErrorCategory;
   readonly status?: number;
+  readonly failedPage?: number;
 
   constructor(
     category: WordPressErrorCategory,
     path: string,
-    options: { status?: number } = {},
+    options: { status?: number; failedPage?: number } = {},
   ) {
     const resource = path.split('?', 1)[0] || '/';
-    const statusText = options.status
-      ? ` (${options.status})`
-      : '';
+    const detail = options.failedPage
+      ? ` (page ${options.failedPage})`
+      : options.status
+        ? ` (${options.status})`
+        : '';
 
-    super(`WordPress ${category} error${statusText}: ${resource}`);
+    super(`WordPress ${category} error${detail}: ${resource}`);
     this.name = 'WordPressError';
     this.category = category;
     this.status = options.status;
+    this.failedPage = options.failedPage;
   }
 }
 
@@ -385,7 +402,7 @@ function authHeader(): string | undefined {
   return user && password ? `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}` : undefined;
 }
 
-async function wpFetch(path: string, options: { preview?: boolean; tags?: string[]; revalidate?: number } = {}): Promise<unknown> {
+async function wpFetchWithHeaders(path: string, options: { preview?: boolean; tags?: string[]; revalidate?: number } = {}): Promise<WordPressFetchResult> {
   const headers: HeadersInit = { Accept: 'application/json' };
   if (options.preview) {
     const authorization = authHeader();
@@ -413,7 +430,10 @@ async function wpFetch(path: string, options: { preview?: boolean; tags?: string
     }
 
     try {
-      return await response.json() as unknown;
+      return {
+        value: await response.json() as unknown,
+        headers: response.headers,
+      };
     } catch {
       if (controller.signal.aborted) {
         throw new WordPressError('timeout', path);
@@ -434,6 +454,30 @@ async function wpFetch(path: string, options: { preview?: boolean; tags?: string
   }
 }
 
+async function wpFetch(path: string, options: { preview?: boolean; tags?: string[]; revalidate?: number } = {}): Promise<unknown> {
+  return (await wpFetchWithHeaders(path, options)).value;
+}
+
+function paginationTotal(
+  headers: Headers,
+  name: 'X-WP-Total' | 'X-WP-TotalPages',
+  path: string,
+): number {
+  const rawValue = headers.get(name)?.trim();
+
+  if (!rawValue || !/^\d+$/.test(rawValue)) {
+    throw new WordPressError('malformed-response', path);
+  }
+
+  const value = Number(rawValue);
+
+  if (!Number.isSafeInteger(value)) {
+    throw new WordPressError('malformed-response', path);
+  }
+
+  return value;
+}
+
 async function termId(restBase: 'categories' | 'tags' | 'cuisine' | 'meal-type' | 'occasion' | 'diet', slug: string): Promise<number | null> {
   const path = `/${restBase}?slug=${encodeURIComponent(slug)}&per_page=1`;
   const value = await wpFetch(path, { tags: [`term:${restBase}:${slug}`], revalidate: 3600 });
@@ -451,18 +495,29 @@ async function termId(restBase: 'categories' | 'tags' | 'cuisine' | 'meal-type' 
   return null;
 }
 
-export async function getPosts(filters: PostFilters = {}): Promise<BlogPost[]> {
+async function getPaginatedPosts(filters: PostFilters = {}): Promise<PaginatedPostsResult> {
+  const currentPage = filters.page ?? 1;
   const params = new URLSearchParams({ context: 'view', per_page: String(Math.min(filters.perPage ?? 24, 100)), page: String(filters.page ?? 1), orderby: 'date', order: 'desc' });
   if (filters.search) params.set('search', filters.search);
-  if (filters.category) { const id = await termId('categories', filters.category); if (!id) return []; params.set('categories', String(id)); }
-  if (filters.tag) { const id = await termId('tags', filters.tag); if (!id) return []; params.set('tags', String(id)); }
-  if (filters.cuisine) { const id = await termId('cuisine', filters.cuisine); if (!id) return []; params.set('cuisine', String(id)); }
-  if (filters.mealType) { const id = await termId('meal-type', filters.mealType); if (!id) return []; params.set('meal-type', String(id)); }
-  if (filters.occasion) { const id = await termId('occasion', filters.occasion); if (!id) return []; params.set('occasion', String(id)); }
-  if (filters.diet) { const id = await termId('diet', filters.diet); if (!id) return []; params.set('diet', String(id)); }
+  if (filters.category) { const id = await termId('categories', filters.category); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('categories', String(id)); }
+  if (filters.tag) { const id = await termId('tags', filters.tag); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('tags', String(id)); }
+  if (filters.cuisine) { const id = await termId('cuisine', filters.cuisine); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('cuisine', String(id)); }
+  if (filters.mealType) { const id = await termId('meal-type', filters.mealType); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('meal-type', String(id)); }
+  if (filters.occasion) { const id = await termId('occasion', filters.occasion); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('occasion', String(id)); }
+  if (filters.diet) { const id = await termId('diet', filters.diet); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('diet', String(id)); }
   const path = `/posts?${params.toString()}`;
-  const value = await wpFetch(path, { tags: ['blog-index'], revalidate: 300 });
-  return normalizePostList(value, path);
+  const { value, headers } = await wpFetchWithHeaders(path, { tags: ['blog-index'], revalidate: 300 });
+
+  return {
+    posts: normalizePostList(value, path),
+    currentPage,
+    totalPosts: paginationTotal(headers, 'X-WP-Total', path),
+    totalPages: paginationTotal(headers, 'X-WP-TotalPages', path),
+  };
+}
+
+export async function getPosts(filters: PostFilters = {}): Promise<BlogPost[]> {
+  return (await getPaginatedPosts(filters)).posts;
 }
 
 export async function getPostBySlug(slug: string, preview = false): Promise<BlogPost | null> {
@@ -484,17 +539,20 @@ export async function getPreviewPostById(id: number): Promise<BlogPost | null> {
 }
 
 export async function getAllPosts(): Promise<BlogPost[]> {
-  const posts: BlogPost[] = [];
-  for (let page = 1; page <= 20; page += 1) {
-    let batch: BlogPost[];
-    try { batch = await getPosts({ perPage: 100, page }); }
-    catch (error) {
-      if (page === 1) throw error;
-      break;
+  const firstPage = await getPaginatedPosts({ perPage: 100, page: 1 });
+  const posts = [...firstPage.posts];
+
+  for (let page = 2; page <= firstPage.totalPages; page += 1) {
+    try {
+      const result = await getPaginatedPosts({ perPage: 100, page });
+      posts.push(...result.posts);
+    } catch {
+      throw new WordPressError('incomplete-fetch', '/posts', {
+        failedPage: page,
+      });
     }
-    posts.push(...batch);
-    if (batch.length < 100) break;
   }
+
   return posts;
 }
 
