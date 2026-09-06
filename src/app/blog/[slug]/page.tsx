@@ -12,10 +12,10 @@ import {
   getPostBySlug,
   getPreviewPostById,
   safeJsonLd,
-  SITE_URL,
   validPreviewToken,
   type BlogPost,
 } from '@/lib/wordpress';
+import { canonicalAuthorSlug, SITE_URL } from '@/lib/site';
 
 export const revalidate = 300;
 
@@ -243,7 +243,7 @@ function structuredData(post: BlogPost) {
     ? {
         '@type': 'Person',
         name: post.data.author.name,
-        url: `${SITE_URL}/authors/${post.data.author.slug}`,
+        url: `${SITE_URL}/authors/${canonicalAuthorSlug(post.data.author.slug)}`,
       }
     : undefined;
 
@@ -481,7 +481,7 @@ export default async function BlogPostPage({
             {post.data.author && (
               <Link
                 className="text-gray-900 hover:text-primary"
-                href={`/authors/${post.data.author.slug}`}
+                href={`/authors/${canonicalAuthorSlug(post.data.author.slug)}`}
               >
                 By {post.data.author.name}
               </Link>

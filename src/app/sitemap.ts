@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { getAllPosts, SITE_URL } from '@/lib/wordpress';
+import { getAllPosts } from '@/lib/wordpress';
+import { canonicalAuthorSlug, SITE_URL } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let posts: Awaited<ReturnType<typeof getAllPosts>> = [];
@@ -63,7 +64,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const authors = new Map(
     posts
       .filter((post) => post.data.author)
-      .map((post) => [post.data.author!.slug, post.data.author!]),
+      .map((post) => [
+        canonicalAuthorSlug(post.data.author!.slug),
+        {
+          ...post.data.author!,
+          slug: canonicalAuthorSlug(post.data.author!.slug),
+        },
+      ]),
   );
 
   const authorPages: MetadataRoute.Sitemap = Array.from(

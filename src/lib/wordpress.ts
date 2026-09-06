@@ -1,7 +1,6 @@
 import 'server-only';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cooketricks.com').replace(/\/$/, '');
 const API_URL = (process.env.WORDPRESS_API_URL ?? 'https://cms.cooketricks.com/wp-json/wp/v2').replace(/\/$/, '');
 
 export interface WPTerm { id: number; name: string; slug: string }

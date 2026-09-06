@@ -1,14 +1,13 @@
 import Header from "@/components/Header";
 import { Metadata } from "next";
+import { createPageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'About Us',
   description:
     'Learn about CookeTricks, our editorial standards and our mission to share practical recipes and cooking guides.',
-  alternates: {
-    canonical: '/about',
-  },
-};
+  path: '/about',
+});
 
 export default function AboutPage() {
   return (

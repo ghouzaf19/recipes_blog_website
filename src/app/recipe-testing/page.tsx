@@ -2,16 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import Header from '@/components/Header';
-import { SITE_URL } from '@/lib/wordpress';
+import { createPageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Recipe Testing Policy',
   description:
     'Learn how CookeTricks tests recipes, records results and distinguishes tested recipes from editorial drafts.',
-  alternates: {
-    canonical: `${SITE_URL}/recipe-testing`,
-  },
-};
+  path: '/recipe-testing',
+});
 
 export default function RecipeTestingPage() {
   return (

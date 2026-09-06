@@ -1,17 +1,22 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 import Header from '@/components/Header';
 
 import {
   getAllPosts,
   safeJsonLd,
-  SITE_URL,
   type BlogPost,
   type WPAuthor,
 } from '@/lib/wordpress';
+import {
+  canonicalAuthorSlug,
+  EDITORIAL_AUTHOR_SLUG,
+  LEGACY_EDITORIAL_AUTHOR_SLUG,
+  SITE_URL,
+} from '@/lib/site';
 
 export const revalidate = 600;
 
@@ -34,26 +39,19 @@ interface AuthorPageData {
 const EDITORIAL_AUTHOR: WPAuthor = {
   id: 0,
   name: 'CookeTricks Editorial',
-  slug: 'cooketricks-editorial',
+  slug: EDITORIAL_AUTHOR_SLUG,
   description:
     'CookeTricks Editorial creates practical recipes and cooking guides for busy home cooks. Our content focuses on clear instructions, food safety, useful substitutions, storage guidance, and realistic cooking times. Recipes labeled as tested are prepared and reviewed before publication, while untested drafts remain clearly marked and unpublished.',
-  url: `${SITE_URL}/authors/cooketricks-editorial`,
+  url: `${SITE_URL}/authors/${EDITORIAL_AUTHOR_SLUG}`,
   avatar: null,
-};
-
-const FALLBACK_AUTHORS: Record<string, WPAuthor> = {
-  'cooketricks-editorial': EDITORIAL_AUTHOR,
-
-  'cooke-tricks-editorial': {
-    ...EDITORIAL_AUTHOR,
-    slug: 'cooke-tricks-editorial',
-    url: `${SITE_URL}/authors/cooke-tricks-editorial`,
-  },
 };
 
 async function loadAuthorPageData(
   slug: string,
 ): Promise<AuthorPageData | null> {
+  const canonicalSlug = canonicalAuthorSlug(slug);
+  const isEditorialAuthor =
+    canonicalSlug === EDITORIAL_AUTHOR_SLUG;
   let allPosts: BlogPost[] = [];
 
   try {
@@ -66,17 +64,28 @@ async function loadAuthorPageData(
   }
 
   const posts = allPosts.filter(
-    (post) => post.data.author?.slug === slug,
+    (post) =>
+      post.data.author &&
+      (isEditorialAuthor
+        ? canonicalAuthorSlug(post.data.author.slug) ===
+          EDITORIAL_AUTHOR_SLUG
+        : post.data.author.slug === canonicalSlug),
   );
 
   const wordpressAuthor =
     posts[0]?.data.author ?? null;
 
-  const fallbackAuthor =
-    FALLBACK_AUTHORS[slug] ?? null;
-
-  const author =
-    wordpressAuthor ?? fallbackAuthor;
+  const author = wordpressAuthor
+    ? isEditorialAuthor
+      ? {
+          ...wordpressAuthor,
+          slug: EDITORIAL_AUTHOR_SLUG,
+          url: `${SITE_URL}/authors/${EDITORIAL_AUTHOR_SLUG}`,
+        }
+      : wordpressAuthor
+    : isEditorialAuthor
+      ? EDITORIAL_AUTHOR
+      : null;
 
   if (!author) {
     return null;
@@ -94,6 +103,20 @@ export async function generateMetadata({
   params: PageParams;
 }): Promise<Metadata> {
   const { slug } = await params;
+
+  if (slug === LEGACY_EDITORIAL_AUTHOR_SLUG) {
+    return {
+      title: EDITORIAL_AUTHOR.name,
+      alternates: {
+        canonical: `${SITE_URL}/authors/${EDITORIAL_AUTHOR_SLUG}`,
+      },
+      robots: {
+        index: false,
+        follow: true,
+      },
+    };
+  }
+
   const data = await loadAuthorPageData(slug);
 
   if (!data) {
@@ -158,6 +181,11 @@ export default async function AuthorPage({
   params: PageParams;
 }) {
   const { slug } = await params;
+
+  if (slug === LEGACY_EDITORIAL_AUTHOR_SLUG) {
+    permanentRedirect(`/authors/${EDITORIAL_AUTHOR_SLUG}`);
+  }
+
   const data = await loadAuthorPageData(slug);
 
   if (!data) {

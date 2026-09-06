@@ -2,16 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import Header from '@/components/Header';
-import { SITE_URL } from '@/lib/wordpress';
+import { createPageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Editorial Policy',
   description:
     'Learn how CookeTricks creates, reviews, tests, updates and corrects recipes and cooking guides.',
-  alternates: {
-    canonical: `${SITE_URL}/editorial-policy`,
-  },
-};
+  path: '/editorial-policy',
+});
 
 export default function EditorialPolicyPage() {
   return (

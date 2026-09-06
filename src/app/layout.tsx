@@ -6,7 +6,7 @@ import {
 } from 'next/font/google';
 
 import Footer from '@/components/Footer';
-import { SITE_URL } from '@/lib/wordpress';
+import { SITE_URL } from '@/lib/site';
 
 import './globals.css';
 

@@ -1,14 +1,13 @@
 import Header from "@/components/Header";
 import { Metadata } from "next";
+import { createPageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Privacy Policy',
   description:
     'Read the CookeTricks Privacy Policy and learn how information may be collected, used and protected.',
-  alternates: {
-    canonical: '/privacy',
-  },
-};
+  path: '/privacy',
+});
 
 export default function PrivacyPage() {
   return (

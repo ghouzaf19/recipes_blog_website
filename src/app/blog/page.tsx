@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { getPosts, safeJsonLd, SITE_URL, type BlogPost } from '@/lib/wordpress';
+import { getPosts, safeJsonLd, type BlogPost } from '@/lib/wordpress';
+import { createPageMetadata, SITE_URL } from '@/lib/site';
 
 export const revalidate = 300;
 
@@ -41,11 +42,13 @@ export async function generateMetadata({ searchParams }: { searchParams?: Promis
   const description = 'Browse CookeTricks recipes, tested cooking notes, and practical kitchen guides.';
   const filtered = Boolean(first(params.q) || first(params.category) || first(params.cuisine) || first(params.tag) || first(params.mealType) || first(params.occasion) || first(params.diet));
   return {
-    title,
-    description,
+    ...createPageMetadata({
+      title,
+      description,
+      path: '/blog',
+      socialTitle: title,
+    }),
     robots: filtered ? { index: false, follow: true } : undefined,
-    alternates: { canonical: `${SITE_URL}/blog` },
-    openGraph: { title, description, url: `${SITE_URL}/blog`, type: 'website' },
   };
 }
 

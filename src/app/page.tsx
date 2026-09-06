@@ -10,15 +10,18 @@ import {
   safeJsonLd,
   type BlogPost,
 } from "@/lib/wordpress";
+import {
+  createPageMetadata,
+  SITE_URL,
+} from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "CookeTricks - Practical Recipes & Cooking Guides",
+export const metadata: Metadata = createPageMetadata({
+  title: "Practical Recipes & Cooking Guides | CookeTricks",
+  socialTitle: "CookeTricks - Practical Recipes & Cooking Guides",
   description:
     "Practical recipes and cooking guides with clear instructions, timing, temperatures, and troubleshooting for everyday home cooks.",
-  alternates: {
-    canonical: "/",
-  },
-};
+  path: "/",
+});
 
 export const revalidate = 300;
 
@@ -186,12 +189,12 @@ export default async function Home() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "CookeTricks",
-    url: "https://cooketricks.com",
+    url: SITE_URL,
     description:
       "Practical recipes and cooking guides for everyday home cooks.",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://cooketricks.com/blog?q={search_term_string}",
+      target: `${SITE_URL}/blog?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
   };

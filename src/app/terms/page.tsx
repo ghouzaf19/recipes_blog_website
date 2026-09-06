@@ -1,14 +1,13 @@
 import Header from "@/components/Header";
 import { Metadata } from "next";
+import { createPageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Terms of Service',
   description:
     'Read the terms that govern access to and use of the CookeTricks website and its content.',
-  alternates: {
-    canonical: '/terms',
-  },
-};
+  path: '/terms',
+});
 
 export default function TermsPage() {
   return (
