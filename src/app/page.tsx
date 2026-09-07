@@ -87,7 +87,7 @@ function PostImage({
 
 function RecipeCard({
   post,
-  sizes = "(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px",
+  sizes = "(max-width: 639px) calc(100vw - 48px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px",
 }: {
   post: PostCard;
   sizes?: string;
@@ -349,7 +349,7 @@ export default async function Home() {
             src={item.img}
             alt={item.name}
             fill
-            sizes="(max-width: 640px) 30vw, 155px"
+            sizes="(max-width: 468px) calc(33.333vw - 21.333px), (max-width: 639px) 135px, (max-width: 918px) calc(20vw - 28.8px), 155px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
@@ -413,7 +413,7 @@ export default async function Home() {
                 <RecipeCard
                   key={post.id}
                   post={post}
-                  sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc(100vw - 48px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px"
+                  sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px"
                 />
               ))}
             </div>
