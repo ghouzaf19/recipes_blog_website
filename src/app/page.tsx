@@ -54,12 +54,12 @@ function postsFromResult(
 
 function PostImage({
   post,
-  highFetchPriority = false,
+  preload,
   sizes,
   className = "",
 }: {
   post: PostCard;
-  highFetchPriority?: boolean;
+  preload?: boolean;
   sizes: string;
   className?: string;
 }) {
@@ -78,7 +78,7 @@ function PostImage({
       src={src}
       alt={imageAlt(post)}
       fill
-      fetchPriority={highFetchPriority ? "high" : undefined}
+      preload={preload}
       sizes={sizes}
       className={`object-cover ${className}`}
     />
@@ -242,7 +242,7 @@ export default async function Home() {
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                   <PostImage
   post={featuredPost}
-  highFetchPriority
+  preload
   sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 48px), (max-width: 1199px) 54vw, 646px"
   className="transition-transform duration-700 group-hover:scale-[1.03]"
 />

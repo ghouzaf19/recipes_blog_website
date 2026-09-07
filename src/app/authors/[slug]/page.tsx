@@ -233,6 +233,7 @@ export default async function AuthorPage({
               alt={author.name}
               width={160}
               height={160}
+              fetchPriority="high"
               className="aspect-square rounded-full object-cover"
             />
           ) : (
