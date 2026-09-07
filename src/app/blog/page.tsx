@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { getPosts, safeJsonLd, type BlogPost } from '@/lib/wordpress';
+import {
+  getPaginatedPosts,
+  getWordPressErrorCategory,
+  safeJsonLd,
+  type BlogPost,
+  type PostListResult,
+} from '@/lib/wordpress';
 import { createPageMetadata, SITE_URL } from '@/lib/site';
 
 export const revalidate = 300;
@@ -11,6 +17,14 @@ type SearchParams = { [key: string]: string | string[] | undefined };
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function pageNumber(value: string | string[] | undefined): number {
+  const rawValue = first(value);
+  if (!rawValue || !/^\d+$/.test(rawValue)) return 1;
+
+  const page = Number(rawValue);
+  return Number.isSafeInteger(page) ? Math.max(page, 1) : 1;
 }
 
 function label(value: string): string {
@@ -78,9 +92,21 @@ function PostCard({ post }: { post: BlogPost }) {
 
 export default async function BlogIndex({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const params = (await searchParams) ?? {};
-  const filters = { search: first(params.q), category: first(params.category), cuisine: first(params.cuisine), tag: first(params.tag), mealType: first(params.mealType), occasion: first(params.occasion), diet: first(params.diet), perPage: 48 };
-  let posts: BlogPost[] = [];
-  try { posts = await getPosts(filters); } catch (error) { console.error('WordPress fetch failed:', error); }
+  const page = pageNumber(params.page);
+  const filters = { search: first(params.q), category: first(params.category), cuisine: first(params.cuisine), tag: first(params.tag), mealType: first(params.mealType), occasion: first(params.occasion), diet: first(params.diet), perPage: 48, page };
+  let listing: PostListResult | null = null;
+
+  try {
+    listing = await getPaginatedPosts(filters);
+  } catch (error) {
+    console.error('[wordpress:list-fetch-failed]', {
+      route: '/blog',
+      category: getWordPressErrorCategory(error),
+      page,
+    });
+  }
+
+  const posts = listing?.posts ?? [];
   const displayTitle = titleFor(params);
   const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', name: displayTitle, itemListElement: posts.map((post, index) => ({ '@type': 'ListItem', position: index + 1, url: `${SITE_URL}/blog/${post.slug}` })) };
 

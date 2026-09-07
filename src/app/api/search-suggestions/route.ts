@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getPosts } from "@/lib/wordpress";
+import {
+  getPosts,
+  getWordPressErrorCategory,
+} from "@/lib/wordpress";
 
 export async function GET() {
   try {
@@ -23,7 +26,9 @@ export async function GET() {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error("Search suggestions error:", error);
+    console.error("[wordpress:search-suggestions-fetch-failed]", {
+      category: getWordPressErrorCategory(error),
+    });
 
     return NextResponse.json(
       { error: "Failed to load articles" },

@@ -78,10 +78,10 @@ interface WordPressFetchResult {
   headers: Headers;
 }
 
-interface PaginatedPostsResult {
+export interface PostListResult {
   posts: BlogPost[];
   currentPage: number;
-  totalPosts: number;
+  totalResults: number;
   totalPages: number;
 }
 
@@ -110,6 +110,12 @@ class WordPressError extends Error {
   }
 }
 
+export function getWordPressErrorCategory(error: unknown): string {
+  return error instanceof WordPressError
+    ? error.category
+    : 'unknown';
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -136,6 +142,24 @@ function positiveInteger(value: unknown): number | null {
     value > 0
     ? value
     : null;
+}
+
+function clampedPositiveInteger(
+  value: number | undefined,
+  fallback: number,
+  maximum = Number.MAX_SAFE_INTEGER,
+): number {
+  if (value === undefined || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  const integer = Math.trunc(value);
+
+  if (!Number.isSafeInteger(integer)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(integer, 1), maximum);
 }
 
 function nonNegativeInteger(value: unknown): number | null {
@@ -506,16 +530,21 @@ async function termId(restBase: 'categories' | 'tags' | 'cuisine' | 'meal-type' 
   return null;
 }
 
-async function getPaginatedPosts(filters: InternalPostFilters = {}): Promise<PaginatedPostsResult> {
-  const currentPage = filters.page ?? 1;
-  const params = new URLSearchParams({ context: 'view', per_page: String(Math.min(filters.perPage ?? 24, 100)), page: String(filters.page ?? 1), orderby: 'date', order: 'desc' });
+export async function getPaginatedPosts(filters: PostFilters = {}): Promise<PostListResult> {
+  return getPaginatedPostsInternal(filters);
+}
+
+async function getPaginatedPostsInternal(filters: InternalPostFilters = {}): Promise<PostListResult> {
+  const currentPage = clampedPositiveInteger(filters.page, 1);
+  const perPage = clampedPositiveInteger(filters.perPage, 24, 100);
+  const params = new URLSearchParams({ context: 'view', per_page: String(perPage), page: String(currentPage), orderby: 'date', order: 'desc' });
   if (filters.search) params.set('search', filters.search);
-  if (filters.category) { const id = await termId('categories', filters.category); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('categories', String(id)); }
-  if (filters.tag) { const id = await termId('tags', filters.tag); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('tags', String(id)); }
-  if (filters.cuisine) { const id = await termId('cuisine', filters.cuisine); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('cuisine', String(id)); }
-  if (filters.mealType) { const id = await termId('meal-type', filters.mealType); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('meal-type', String(id)); }
-  if (filters.occasion) { const id = await termId('occasion', filters.occasion); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('occasion', String(id)); }
-  if (filters.diet) { const id = await termId('diet', filters.diet); if (!id) return { posts: [], currentPage, totalPosts: 0, totalPages: 0 }; params.set('diet', String(id)); }
+  if (filters.category) { const id = await termId('categories', filters.category); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('categories', String(id)); }
+  if (filters.tag) { const id = await termId('tags', filters.tag); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('tags', String(id)); }
+  if (filters.cuisine) { const id = await termId('cuisine', filters.cuisine); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('cuisine', String(id)); }
+  if (filters.mealType) { const id = await termId('meal-type', filters.mealType); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('meal-type', String(id)); }
+  if (filters.occasion) { const id = await termId('occasion', filters.occasion); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('occasion', String(id)); }
+  if (filters.diet) { const id = await termId('diet', filters.diet); if (!id) return { posts: [], currentPage, totalResults: 0, totalPages: 0 }; params.set('diet', String(id)); }
   if (filters.authorId) params.set('author', String(filters.authorId));
   const path = `/posts?${params.toString()}`;
   const { value, headers } = await wpFetchWithHeaders(path, { tags: ['blog-index'], revalidate: 300 });
@@ -523,7 +552,7 @@ async function getPaginatedPosts(filters: InternalPostFilters = {}): Promise<Pag
   return {
     posts: normalizePostList(value, path),
     currentPage,
-    totalPosts: paginationTotal(headers, 'X-WP-Total', path),
+    totalResults: paginationTotal(headers, 'X-WP-Total', path),
     totalPages: paginationTotal(headers, 'X-WP-TotalPages', path),
   };
 }
@@ -579,12 +608,12 @@ export async function getPreviewPostById(id: number): Promise<BlogPost | null> {
 }
 
 async function getAllPostPages(filters: InternalPostFilters = {}): Promise<BlogPost[]> {
-  const firstPage = await getPaginatedPosts({ ...filters, perPage: 100, page: 1 });
+  const firstPage = await getPaginatedPostsInternal({ ...filters, perPage: 100, page: 1 });
   const posts = [...firstPage.posts];
 
   for (let page = 2; page <= firstPage.totalPages; page += 1) {
     try {
-      const result = await getPaginatedPosts({ ...filters, perPage: 100, page });
+      const result = await getPaginatedPostsInternal({ ...filters, perPage: 100, page });
       posts.push(...result.posts);
     } catch {
       throw new WordPressError('incomplete-fetch', '/posts', {
