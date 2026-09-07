@@ -207,6 +207,26 @@ function normalizeImage(value: unknown): WPImage | null {
   };
 }
 
+function upgradeGravatarSource(value: string | null): string | null {
+  if (value === null) return null;
+
+  try {
+    const url = new URL(value);
+
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname.toLowerCase() !== 'secure.gravatar.com'
+    ) {
+      return value;
+    }
+
+    url.searchParams.set('s', '320');
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
 function normalizeAuthor(value: unknown): WPAuthor | null {
   if (!isRecord(value)) return null;
 
@@ -221,17 +241,19 @@ function normalizeAuthor(value: unknown): WPAuthor | null {
     return null;
   }
 
+  const avatar =
+    nullableString(value.avatar) ??
+    nullableString(avatarUrls['96']) ??
+    nullableString(avatarUrls['48']) ??
+    nullableString(avatarUrls['24']);
+
   return {
     id,
     name,
     slug,
     description: nonEmptyString(value.description) ?? undefined,
     url: nonEmptyString(value.url) ?? undefined,
-    avatar:
-      nullableString(value.avatar) ??
-      nullableString(avatarUrls['96']) ??
-      nullableString(avatarUrls['48']) ??
-      nullableString(avatarUrls['24']),
+    avatar: upgradeGravatarSource(avatar),
   };
 }
 
