@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import {
   getPaginatedPosts,
   getWordPressErrorCategory,
   safeJsonLd,
   type BlogPost,
+  type PostFilters,
   type PostListResult,
 } from '@/lib/wordpress';
 import { createPageMetadata, SITE_URL } from '@/lib/site';
@@ -90,10 +92,54 @@ function PostCard({ post, highFetchPriority = false }: { post: BlogPost; highFet
   );
 }
 
-export default async function BlogIndex({ searchParams }: { searchParams?: Promise<SearchParams> }) {
-  const params = (await searchParams) ?? {};
-  const page = pageNumber(params.page);
-  const filters = { search: first(params.q), category: first(params.category), cuisine: first(params.cuisine), tag: first(params.tag), mealType: first(params.mealType), occasion: first(params.occasion), diet: first(params.diet), perPage: 48, page };
+function BlogListingSkeleton() {
+  return (
+    <div role="status" aria-label="Loading recipes and cooking guides">
+      <div
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        aria-hidden="true"
+      >
+        {Array.from({ length: 8 }, (_, index) => (
+          <div
+            key={index}
+            className="flex h-full min-h-[430px] flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm"
+          >
+            <div className="h-48 w-full animate-pulse bg-gray-100" />
+            <div className="flex flex-1 animate-pulse flex-col p-6">
+              <div className="mb-3 space-y-2">
+                <div className="h-4 w-32 rounded bg-gray-200" />
+                <div className="h-3 w-20 rounded bg-gray-100" />
+              </div>
+              <div className="mb-3 space-y-2">
+                <div className="h-6 w-full rounded bg-gray-200" />
+                <div className="h-6 w-3/4 rounded bg-gray-200" />
+              </div>
+              <div className="mb-4 space-y-2">
+                <div className="h-4 w-full rounded bg-gray-100" />
+                <div className="h-4 w-5/6 rounded bg-gray-100" />
+                <div className="h-4 w-2/3 rounded bg-gray-100" />
+              </div>
+              <div className="mt-auto flex gap-2">
+                <div className="h-6 w-20 rounded-full bg-gray-100" />
+                <div className="h-6 w-16 rounded-full bg-amber-50" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function BlogListingResults({
+  filters,
+  displayTitle,
+  page,
+}: {
+  filters: PostFilters;
+  displayTitle: string;
+  page: number;
+}) {
   let listing: PostListResult | null = null;
 
   try {
@@ -107,18 +153,36 @@ export default async function BlogIndex({ searchParams }: { searchParams?: Promi
   }
 
   const posts = listing?.posts ?? [];
-  const displayTitle = titleFor(params);
   const itemList = { '@context': 'https://schema.org', '@type': 'ItemList', name: displayTitle, itemListElement: posts.map((post, index) => ({ '@type': 'ListItem', position: index + 1, url: `${SITE_URL}/blog/${post.slug}` })) };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(itemList) }} />
+      {posts.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{posts.map((post, index) => <PostCard key={post.id} post={post} highFetchPriority={index === 0} />)}</div> : <div className="py-20 text-center"><span className="mb-6 block text-5xl">🔍</span><p className="text-lg text-gray-500">No content found. Try a different filter.</p><Link href="/blog" className="mt-6 inline-block font-medium text-primary">← Browse everything</Link></div>}
+    </>
+  );
+}
+
+export default async function BlogIndex({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = (await searchParams) ?? {};
+  const page = pageNumber(params.page);
+  const filters: PostFilters = { search: first(params.q), category: first(params.category), cuisine: first(params.cuisine), tag: first(params.tag), mealType: first(params.mealType), occasion: first(params.occasion), diet: first(params.diet), perPage: 48, page };
+  const displayTitle = titleFor(params);
+
+  return (
+    <>
       <Header />
       <main className="min-h-[calc(100vh-64px)] py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h1 className="mb-6 text-center text-4xl font-medium tracking-tight text-gray-900">{displayTitle}</h1>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-gray-600">Recipes and cooking guides from CookeTricks.</p>
-          {posts.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{posts.map((post, index) => <PostCard key={post.id} post={post} highFetchPriority={index === 0} />)}</div> : <div className="py-20 text-center"><span className="mb-6 block text-5xl">🔍</span><p className="text-lg text-gray-500">No content found. Try a different filter.</p><Link href="/blog" className="mt-6 inline-block font-medium text-primary">← Browse everything</Link></div>}
+          <Suspense fallback={<BlogListingSkeleton />}>
+            <BlogListingResults
+              filters={filters}
+              displayTitle={displayTitle}
+              page={page}
+            />
+          </Suspense>
         </div>
       </main>
     </>
