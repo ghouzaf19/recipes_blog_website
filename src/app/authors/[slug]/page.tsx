@@ -234,7 +234,6 @@ export default async function AuthorPage({
               width={160}
               height={160}
               className="aspect-square rounded-full object-cover"
-              priority
             />
           ) : (
             <div

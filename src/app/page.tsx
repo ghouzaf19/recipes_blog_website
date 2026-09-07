@@ -54,16 +54,14 @@ function postsFromResult(
 
 function PostImage({
   post,
-  priority = false,
+  highFetchPriority = false,
   sizes,
   className = "",
-  quality = 75,
 }: {
   post: PostCard;
-  priority?: boolean;
+  highFetchPriority?: boolean;
   sizes: string;
   className?: string;
-  quality?: number;
 }) {
   const src = imageUrl(post);
 
@@ -80,16 +78,20 @@ function PostImage({
       src={src}
       alt={imageAlt(post)}
       fill
-      priority={priority}
-      fetchPriority={priority ? "high" : undefined}
-      quality={quality}
+      fetchPriority={highFetchPriority ? "high" : undefined}
       sizes={sizes}
       className={`object-cover ${className}`}
     />
   );
 }
 
-function RecipeCard({ post }: { post: PostCard }) {
+function RecipeCard({
+  post,
+  sizes = "(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px",
+}: {
+  post: PostCard;
+  sizes?: string;
+}) {
   return (
     <Link
       href={`/blog/${post.slug}`}
@@ -98,7 +100,7 @@ function RecipeCard({ post }: { post: PostCard }) {
       <div className="relative mb-4 aspect-[4/3] overflow-hidden bg-gray-100">
         <PostImage
           post={post}
-          sizes="(max-width: 768px) 50vw, 25vw"
+          sizes={sizes}
           className="transition-transform duration-500 group-hover:scale-105"
         />
       </div>
@@ -240,9 +242,8 @@ export default async function Home() {
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                   <PostImage
   post={featuredPost}
-  priority
-  quality={70}
-  sizes="(max-width: 1024px) 100vw, 60vw"
+  highFetchPriority
+  sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(100vw - 48px), (max-width: 1199px) 54vw, 646px"
   className="transition-transform duration-700 group-hover:scale-[1.03]"
 />
                 </div>
@@ -409,7 +410,11 @@ export default async function Home() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
               {airFryerPosts.slice(0, 4).map((post) => (
-                <RecipeCard key={post.id} post={post} />
+                <RecipeCard
+                  key={post.id}
+                  post={post}
+                  sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 767px) calc(100vw - 48px), (max-width: 1023px) calc(50vw - 40px), (max-width: 1199px) calc(25vw - 40px), 260px"
+                />
               ))}
             </div>
           </section>

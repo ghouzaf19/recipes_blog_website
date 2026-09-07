@@ -66,14 +66,14 @@ export async function generateMetadata({ searchParams }: { searchParams?: Promis
   };
 }
 
-function PostCard({ post }: { post: BlogPost }) {
+function PostCard({ post, highFetchPriority = false }: { post: BlogPost; highFetchPriority?: boolean }) {
   const image = post.data.featuredImage;
   const cuisine = post.data.taxonomies.cuisines[0]?.name;
   const recipe = post.data.recipe;
   return (
     <Link href={`/blog/${post.slug}`} className="group flex h-full flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
       <div className="relative h-48 w-full bg-gray-100">
-        {image ? <Image src={image.url} alt={image.alt || post.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-cover" /> : <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-4xl">🍳</div>}
+        {image ? <Image src={image.url} alt={image.alt || post.title} fill fetchPriority={highFetchPriority ? 'high' : undefined} sizes="(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 36px), (max-width: 1279px) calc(33.333vw - 37px), 286px" className="object-cover" /> : <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 text-4xl">🍳</div>}
       </div>
       <div className="flex flex-1 flex-col p-6">
         {post.data.author && <div className="mb-3 text-sm"><p className="font-medium text-gray-900">{post.data.author.name}</p><time className="text-xs text-gray-500" dateTime={post.publishedAt}>{new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</time></div>}
@@ -118,7 +118,7 @@ export default async function BlogIndex({ searchParams }: { searchParams?: Promi
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h1 className="mb-6 text-center text-4xl font-medium tracking-tight text-gray-900">{displayTitle}</h1>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-gray-600">Recipes and cooking guides from CookeTricks.</p>
-          {posts.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{posts.map((post) => <PostCard key={post.id} post={post} />)}</div> : <div className="py-20 text-center"><span className="mb-6 block text-5xl">🔍</span><p className="text-lg text-gray-500">No content found. Try a different filter.</p><Link href="/blog" className="mt-6 inline-block font-medium text-primary">← Browse everything</Link></div>}
+          {posts.length ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{posts.map((post, index) => <PostCard key={post.id} post={post} highFetchPriority={index === 0} />)}</div> : <div className="py-20 text-center"><span className="mb-6 block text-5xl">🔍</span><p className="text-lg text-gray-500">No content found. Try a different filter.</p><Link href="/blog" className="mt-6 inline-block font-medium text-primary">← Browse everything</Link></div>}
         </div>
       </main>
     </>
