@@ -15,7 +15,7 @@ const navItems = [
     name: "Dinners",
     href: "/blog?mealType=dinner",
     items: [
-      { label: "Quick Dinners", href: "/blog?category=quick-dinners" },
+      { label: "Quick Dinners", href: "/blog?mealType=dinner" },
       { label: "Healthy Dinners", href: "/blog?category=healthy-dinners" },
       { label: "Kid-Friendly", href: "/blog?category=kid-friendly" },
     ],
