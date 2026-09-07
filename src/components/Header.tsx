@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Search, Menu, ChevronDown, Utensils, X } from "lucide-react";
-import SearchOverlay from "@/components/SearchOverlay";
+
+const SearchOverlay = dynamic(
+  () => import("@/components/SearchOverlay"),
+  { ssr: false },
+);
+
 const navItems = [
   {
     name: "Dinners",
@@ -65,6 +71,12 @@ export default function Header() {
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [shouldLoadSearch, setShouldLoadSearch] = useState(false);
+
+  const toggleSearch = () => {
+    setShouldLoadSearch(true);
+    setIsSearchOpen((isOpen) => !isOpen);
+  };
 
   // Close desktop dropdown when clicking outside
   useEffect(() => {
@@ -144,7 +156,7 @@ export default function Header() {
     type="button"
     aria-label="Search recipes"
     aria-expanded={isSearchOpen}
-    onClick={() => setIsSearchOpen(!isSearchOpen)}
+    onClick={toggleSearch}
     className="flex h-11 w-11 items-center justify-center rounded-full text-gray-700 transition-all duration-200 hover:bg-primary hover:text-white"
   >
     {isSearchOpen ? (
@@ -161,7 +173,7 @@ export default function Header() {
     type="button"
     aria-label="Search recipes"
     aria-expanded={isSearchOpen}
-    onClick={() => setIsSearchOpen(!isSearchOpen)}
+    onClick={toggleSearch}
     className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 hover:bg-primary hover:text-white"
   >
     {isSearchOpen ? (
@@ -173,10 +185,12 @@ export default function Header() {
 </div>
 </div>
 </div>
-<SearchOverlay
-  isOpen={isSearchOpen}
-  onClose={() => setIsSearchOpen(false)}
-/>
+{shouldLoadSearch && (
+  <SearchOverlay
+    isOpen={isSearchOpen}
+    onClose={() => setIsSearchOpen(false)}
+  />
+)}
 {/* Desktop navigation */}
         <nav
           ref={menuRef}

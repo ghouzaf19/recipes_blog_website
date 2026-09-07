@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Search } from "lucide-react";
-import SearchOverlay from "@/components/SearchOverlay";
+
+const SearchOverlay = dynamic(
+  () => import("@/components/SearchOverlay"),
+  { ssr: false },
+);
 
 export default function HeroSearchTrigger() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [shouldLoadSearch, setShouldLoadSearch] = useState(false);
+
+  const openSearch = () => {
+    setShouldLoadSearch(true);
+    setIsSearchOpen(true);
+  };
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setIsSearchOpen(true)}
+        onClick={openSearch}
         className="relative mx-auto mt-6 block w-full max-w-xl"
       >
         <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
@@ -25,10 +36,12 @@ export default function HeroSearchTrigger() {
         </span>
       </button>
 
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
+      {shouldLoadSearch && (
+        <SearchOverlay
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
     </>
   );
 }
