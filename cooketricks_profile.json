@@ -1,0 +1,83 @@
+{
+  "pName": "CookeTricks",
+  "pRegion": "US",
+  "pNiche": "Practical Recipes & Cooking Guides: Chicken Recipes, Quick and Easy Weeknight Dinners, Essential Cooking Techniques, Air Fryer Recipes, and Meal Prep",
+  "pTheme": "Next.js App Router frontend with headless WordPress CMS",
+  "pReadability": "6th-8th Grade (General US Consumer)",
+  "pStory": "CookeTricks helps home cooks get reliable results through practical recipes, clear cooking methods, troubleshooting guidance, and evidence-led testing. Content should solve a specific kitchen problem, explain why the method works, and avoid unsupported claims or generic filler.",
+  "pAddress": "https://cooketricks.com",
+  "pGSC": "Build topical authority and organic traffic from Google Search, Google Discover, and Pinterest. Prioritize useful recipe and cooking-guide queries, accurate search intent, original information gain, strong internal linking, and technically sound structured data. Do not invent keyword volumes, rankings, or performance figures.",
+  "pSocialStrat": "Professional, friendly, practical, and visually useful. Write concise Pinterest titles and descriptions that accurately match the article. Use original food photography and helpful alt text. Avoid clickbait, exaggerated claims, and unsupported time or result promises.",
+  "pSearch": "Enabled",
+  "appData": {
+    "menus": [
+      "Dinners: Quick Dinners, Healthy Dinners, Kid-Friendly",
+      "Meals: Breakfast, Lunch, Appetizers, Soups",
+      "Ingredients: Chicken, Beef, Seafood, Vegetarian",
+      "Occasions: Holidays, Party Recipes, Date Night",
+      "Cuisines: Italian, Mexican, Asian, Indian",
+      "Kitchen Tips"
+    ],
+    "socials": [],
+    "mediaLinks": [],
+    "sitemapDescription": "This sitemap field is a curated list of important CookeTricks project routes, not a complete copy of the generated XML sitemap.",
+    "sitemap": [
+      "https://cooketricks.com/",
+      "https://cooketricks.com/blog",
+      "https://cooketricks.com/about",
+      "https://cooketricks.com/contact",
+      "https://cooketricks.com/editorial-policy",
+      "https://cooketricks.com/recipe-testing",
+      "https://cooketricks.com/authors/cooke-tricks-editorial",
+      "https://cooketricks.com/privacy",
+      "https://cooketricks.com/terms",
+      "https://cooketricks.com/blog?mealType=dinner",
+      "https://cooketricks.com/blog?category=chicken",
+      "https://cooketricks.com/blog?category=kitchen-tips",
+      "https://cooketricks.com/blog?diet=vegetarian",
+      "https://cooketricks.com/sitemap.xml"
+    ],
+    "sourceOfTruth": {
+      "projectRules": "cooketricks_profile.json is the source of truth for CookeTricks brand, audience, editorial, testing, SEO, and publishing rules.",
+      "contentRegistry": "src/content/content-registry.ts is the source of truth for current pillars, clusters, articles, and ContentLink records; do not duplicate those records in this profile.",
+      "runtimeBehavior": "Application code, including src/components/Header.tsx, is the source of truth for current navigation destinations and runtime behavior."
+    },
+    "affiliates": [],
+    "competitors": [
+      "seriouseats.com",
+      "allrecipes.com",
+      "budgetbytes.com",
+      "thekitchn.com",
+      "spendwithpennies.com"
+    ],
+    "qaChecklist": [
+      "Match one clear search intent and one primary topic without keyword cannibalization",
+      "Use one accurate H1 and a concise SEO title and meta description",
+      "Lead with the practical result and explain why the method works",
+      "Use short paragraphs, plain American English, and 6th-8th grade readability",
+      "For an untested recipe, workflowStatus: \"idea\" is the content registry equivalent of “Needs testing”; keep it there until physical testing is complete",
+      "Every recipe must be physically tested at least twice before final approval; this twice-testing requirement is an approved binding internal standard",
+      "Record exact ingredient weights, equipment, dimensions or thickness, timings, yield, and failure cases",
+      "For poultry, verify a safe internal temperature of 165 degrees F / 74 degrees C",
+      "Do not invent testing, author experience, timings, servings, nutrition, quotes, or results",
+      "Original food photography is the production standard for recipe publication; record a shot list and write descriptive alt text",
+      "Illustrative or AI-assisted imagery is not evidence that a recipe was physically tested",
+      "Validate recipe or article schema, nutrition data, units, and visible page content for consistency",
+      "Add useful internal links to the hub, supporting articles, and relevant cooking-technique guides",
+      "Use authoritative external sources only where safety or factual verification benefits the reader",
+      "Include troubleshooting, substitutions, storage, and reheating only when verified and relevant",
+      "Avoid arbitrary word-count targets, filler, repetitive FAQs, clickbait, and unsupported superlatives",
+      "Create WordPress drafts only when authorized; direct publishing requires explicit approval",
+      "Do not expose credentials, tokens, private URLs, or environment values",
+      "Complete editorial, SEO, schema, link, image, and mobile-page checks before publication",
+      "Publish Pinterest assets only after the corresponding live article has original tested-food photography"
+    ],
+    "authors": [
+      {
+        "name": "CookeTricks Editorial",
+        "bio": "CookeTricks Editorial creates practical recipes and cooking guides for busy home cooks. Content focuses on clear instructions, food safety, useful substitutions, storage guidance, and realistic cooking times. Recipes labeled as tested are prepared and reviewed before publication, while untested drafts remain clearly marked and unpublished."
+      }
+    ],
+    "colors": []
+  }
+}
