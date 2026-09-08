@@ -10,7 +10,7 @@ const PILLAR_ID = "pillar_weeknight_dinners";
 const CLUSTER_ID = "cluster_weeknight_dinners_by_method";
 const HUB_ID = "article_quick_weeknight_dinners";
 const RECIPE_IDS = [
-  "article_one_pot_tomato_spinach_pasta",
+  "article_one_pot_zucchini_tomato_penne",
   "article_garlic_butter_shrimp_rice_skillet",
   "article_ground_beef_broccoli_stir_fry",
   "article_sheet_pan_sausage_peppers_onions",
@@ -26,6 +26,9 @@ test("weeknight dinner cluster is complete and valid", () => {
     ({ clusterId }) => clusterId === CLUSTER_ID,
   );
   const hub = clusterArticles.find(({ id }) => id === HUB_ID);
+  const pasta = clusterArticles.find(
+    ({ id }) => id === "article_one_pot_zucchini_tomato_penne",
+  );
   const recipes = clusterArticles.filter(({ contentType }) =>
     contentType === "recipe"
   );
@@ -35,6 +38,20 @@ test("weeknight dinner cluster is complete and valid", () => {
   assert.equal(clusterArticles.length, 8);
   assert.equal(hub?.contentType, "guide");
   assert.equal(hub?.workflowStatus, "idea");
+  assert.deepEqual(pasta, {
+    id: "article_one_pot_zucchini_tomato_penne",
+    projectId: "project_cooketricks",
+    pillarId: PILLAR_ID,
+    clusterId: CLUSTER_ID,
+    title: "One-Pot Zucchini Tomato Penne for Busy Weeknights",
+    slug: "one-pot-zucchini-tomato-penne",
+    primaryKeyword: "one-pot zucchini tomato penne",
+    secondaryKeywords: [],
+    searchIntent: "transactional",
+    contentType: "recipe",
+    seo: { tags: [] },
+    workflowStatus: "idea",
+  });
   assert.deepEqual(
     new Set(recipes.map(({ id }) => id)),
     new Set(RECIPE_IDS),
