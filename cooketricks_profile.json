@@ -19,7 +19,36 @@
       "Kitchen Tips"
     ],
     "socials": [],
-    "mediaLinks": [],
+    "mediaLinks": [
+      {
+        "creator": "Denis Prokopyev",
+        "channelName": "Denis In The Kitchen",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/@DenisInTheKitchen",
+        "classification": "Approved recipe and visual inspiration source",
+        "bestFitTopics": [
+          "Italian cuisine",
+          "pasta",
+          "quick dinners",
+          "seafood pasta",
+          "professional cooking techniques",
+          "recipe-video shot and sequencing ideas"
+        ],
+        "usageRules": [
+          "Use this channel for topic discovery, technique inspiration, and visual shot planning.",
+          "Do not copy titles, descriptions, scripts, article text, ingredient quantities, or instructions verbatim.",
+          "Do not download, reuse, republish, or present the creator's video frames, thumbnails, photographs, audio, or footage as CookeTricks assets.",
+          "CookeTricks must use original writing and original photography.",
+          "Every recipe inspired by this channel must be independently developed and physically tested at least twice.",
+          "Record the source URL in internal research notes.",
+          "Verify quantities, timings, temperatures, food-safety information, storage guidance, and nutrition independently.",
+          "Add real CookeTricks information gain based on testing, including ratios, equipment, dimensions, timing checkpoints, failure cases, and troubleshooting.",
+          "Do not imply that Denis Prokopyev endorses, collaborates with, or is affiliated with CookeTricks.",
+          "Use authoritative safety sources when safety verification is needed.",
+          "Do not use this channel as the sole inspiration source for unrelated categories or as the sole content source for CookeTricks."
+        ]
+      }
+    ],
     "sitemapDescription": "This sitemap field is a curated list of important CookeTricks project routes, not a complete copy of the generated XML sitemap.",
     "sitemap": [
       "https://cooketricks.com/",

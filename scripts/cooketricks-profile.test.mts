@@ -15,6 +15,16 @@ const EXPECTED_MENUS = [
   "Kitchen Tips",
 ];
 
+const DENIS_CHANNEL_URL = "https://www.youtube.com/@DenisInTheKitchen";
+const DENIS_BEST_FIT_TOPICS = [
+  "Italian cuisine",
+  "pasta",
+  "quick dinners",
+  "seafood pasta",
+  "professional cooking techniques",
+  "recipe-video shot and sequencing ideas",
+];
+
 function parseProfile(): unknown {
   return JSON.parse(rawProfile) as unknown;
 }
@@ -196,5 +206,67 @@ test("profile enforces approved editorial and publishing rules", () => {
   assert.doesNotMatch(
     rawProfile,
     /cluster_weeknight_dinners_by_method|article_quick_weeknight_dinners/,
+  );
+});
+
+test("profile defines the approved Denis In The Kitchen inspiration source", () => {
+  const profile = parseProfile();
+  assertRecord(profile, "profile");
+  assertRecord(profile.appData, "appData");
+  const mediaLinks = profile.appData.mediaLinks;
+  assert.ok(Array.isArray(mediaLinks));
+  assert.equal(mediaLinks.length, 1);
+
+  const channel = mediaLinks[0];
+  assertRecord(channel, "appData.mediaLinks[0]");
+  assert.equal(channel.creator, "Denis Prokopyev");
+  assert.equal(channel.channelName, "Denis In The Kitchen");
+  assert.equal(channel.platform, "YouTube");
+  assert.equal(channel.url, DENIS_CHANNEL_URL);
+  assert.equal(
+    channel.classification,
+    "Approved recipe and visual inspiration source",
+  );
+  assert.deepEqual(channel.bestFitTopics, DENIS_BEST_FIT_TOPICS);
+  assert.equal(Array.isArray(channel.usageRules), true);
+
+  const usageRules = channel.usageRules as unknown[];
+  requireRule(
+    usageRules,
+    /topic discovery, technique inspiration, and visual shot planning/i,
+  );
+  requireRule(
+    usageRules,
+    /do not copy titles, descriptions, scripts, article text, ingredient quantities, or instructions verbatim/i,
+  );
+  requireRule(
+    usageRules,
+    /do not download, reuse, republish, or present.*video frames, thumbnails, photographs, audio, or footage.*CookeTricks assets/i,
+  );
+  requireRule(usageRules, /original writing and original photography/i);
+  requireRule(
+    usageRules,
+    /independently developed and physically tested at least twice/i,
+  );
+  requireRule(usageRules, /record the source URL in internal research notes/i);
+  requireRule(
+    usageRules,
+    /verify quantities, timings, temperatures, food-safety information, storage guidance, and nutrition independently/i,
+  );
+  requireRule(
+    usageRules,
+    /CookeTricks information gain based on testing.*ratios, equipment, dimensions, timing checkpoints, failure cases, and troubleshooting/i,
+  );
+  requireRule(
+    usageRules,
+    /do not imply.*Denis Prokopyev endorses, collaborates with, or is affiliated with CookeTricks/i,
+  );
+  requireRule(
+    usageRules,
+    /authoritative safety sources when safety verification is needed/i,
+  );
+  requireRule(
+    usageRules,
+    /not use this channel as the sole inspiration source for unrelated categories.*sole content source for CookeTricks/i,
   );
 });
