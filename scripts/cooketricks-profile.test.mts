@@ -24,6 +24,10 @@ const DENIS_BEST_FIT_TOPICS = [
   "professional cooking techniques",
   "recipe-video shot and sequencing ideas",
 ];
+const THEME_REFERENCE_COMPETITORS = [
+  "natashaskitchen.com",
+  "robinmillercooks.com",
+];
 
 function parseProfile(): unknown {
   return JSON.parse(rawProfile) as unknown;
@@ -170,6 +174,22 @@ test("profile contains no legacy brands or credential fields", () => {
     ),
     true,
   );
+});
+
+test("profile includes each approved theme-reference competitor exactly once", () => {
+  const profile = parseProfile();
+  assertRecord(profile, "profile");
+  assertRecord(profile.appData, "appData");
+  const competitors = profile.appData.competitors;
+  assert.ok(Array.isArray(competitors));
+
+  for (const domain of THEME_REFERENCE_COMPETITORS) {
+    assert.equal(
+      competitors.filter((competitor) => competitor === domain).length,
+      1,
+      `${domain} must appear exactly once in appData.competitors`,
+    );
+  }
 });
 
 test("profile enforces approved editorial and publishing rules", () => {
