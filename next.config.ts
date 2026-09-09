@@ -1,11 +1,14 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+import { getCanonicalHostRedirects } from "./src/lib/site";
+
 // Resolve the absolute project root once so Turbopack never crawls upward
 const projectRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
   output: "standalone", // Required for Hostinger Node.js deployment
+  redirects: async () => getCanonicalHostRedirects(),
   images: {
     qualities: [75],
     remotePatterns: [
