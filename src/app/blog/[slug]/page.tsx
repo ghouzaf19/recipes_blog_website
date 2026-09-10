@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { draftMode } from 'next/headers';
+import { cookies, draftMode } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -11,10 +11,15 @@ import { SafeHtml } from '@/components/SafeHtml';
 import {
   getPostBySlug,
   getPreviewPostById,
+  resolveWordPressPost,
   safeJsonLd,
-  validPreviewToken,
   type BlogPost,
 } from '@/lib/wordpress';
+import {
+  PREVIEW_SESSION_COOKIE,
+  previewSessionMatchesPost,
+  verifyPreviewSession,
+} from '@/lib/cooketricks-security';
 import { canonicalAuthorSlug, SITE_URL } from '@/lib/site';
 
 export const revalidate = 300;
@@ -24,8 +29,7 @@ type PageParams = Promise<{
 }>;
 
 type PageSearchParams = Promise<{
-  preview_id?: string;
-  preview_token?: string;
+  preview?: string;
 }>;
 
 interface LoadedPost {
@@ -37,26 +41,25 @@ interface LoadedPost {
  * Public requests only load published WordPress posts.
  *
  * Drafts are returned only when:
- * 1. Preview parameters are present.
+ * 1. The clean preview marker is present.
  * 2. Next.js Draft Mode is enabled.
- * 3. The preview ID is valid.
- * 4. The signed preview token is valid.
+ * 3. The signed, HttpOnly preview session is valid.
+ * 4. The session is bound to the requested WordPress post.
  */
 async function loadPost(
   slug: string,
-  previewIdValue?: string,
-  previewTokenValue?: string,
+  previewValue?: string,
 ): Promise<LoadedPost> {
-  const previewRequested =
-    previewIdValue !== undefined ||
-    previewTokenValue !== undefined;
+  const previewRequested = previewValue !== undefined;
 
   /*
    * Normal public request.
    * Never request draft content from WordPress.
    */
   if (!previewRequested) {
-    const post = await getPostBySlug(slug, false);
+    const post = await resolveWordPressPost(
+      () => getPostBySlug(slug, false),
+    );
 
     return {
       post,
@@ -64,8 +67,15 @@ async function loadPost(
     };
   }
 
+  if (previewValue !== '1') {
+    return {
+      post: null,
+      isPreview: true,
+    };
+  }
+
   /*
-   * Preview parameters exist, so Draft Mode must also
+   * The preview marker exists, so Draft Mode must also
    * have been enabled by /api/preview.
    */
   const previewModeEnabled = (await draftMode()).isEnabled;
@@ -77,37 +87,32 @@ async function loadPost(
     };
   }
 
-  const previewId = Number(previewIdValue);
-  const previewToken = previewTokenValue ?? '';
+  const session = verifyPreviewSession(
+    (await cookies()).get(PREVIEW_SESSION_COOKIE)?.value,
+    process.env.COOKETRICKS_PREVIEW_SECRET ?? '',
+  );
 
-  const previewIsValid =
-    Number.isInteger(previewId) &&
-    previewId > 0 &&
-    validPreviewToken(previewId, previewToken);
-
-  if (!previewIsValid) {
+  if (!session) {
     return {
       post: null,
       isPreview: true,
     };
   }
 
-  const post = await getPreviewPostById(previewId);
+  const post = await resolveWordPressPost(
+    () => getPreviewPostById(session.postId),
+  );
 
   /*
-   * Prevent a valid preview token for one post from being
-   * reused with an unrelated slug.
+   * A valid Draft Mode cookie alone cannot authorize another draft.
+   * The CookeTricks session is bound to one post and one clean slug.
    */
- if (
-  post &&
-  slug !== 'preview' &&
-  post.slug !== slug
-) {
-  return {
-    post: null,
-    isPreview: true,
-  };
-}
+  if (post && !previewSessionMatchesPost(session, post, slug)) {
+    return {
+      post: null,
+      isPreview: true,
+    };
+  }
 
   return {
     post,
@@ -123,30 +128,9 @@ export async function generateMetadata({
   searchParams: PageSearchParams;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const { preview_id, preview_token } = await searchParams;
+  const { preview } = await searchParams;
 
-  let loaded: LoadedPost;
-
-  try {
-    loaded = await loadPost(
-      slug,
-      preview_id,
-      preview_token,
-    );
-  } catch (error) {
-    console.error(
-      'WordPress metadata fetch failed:',
-      error,
-    );
-
-    return {
-      title: 'Page Not Found',
-      robots: {
-        index: false,
-        follow: false,
-      },
-    };
-  }
+  const loaded = await loadPost(slug, preview);
 
   const { post, isPreview } = loaded;
 
@@ -347,25 +331,9 @@ export default async function BlogPostPage({
   searchParams: PageSearchParams;
 }) {
   const { slug } = await params;
-  const { preview_id, preview_token } =
-    await searchParams;
+  const { preview } = await searchParams;
 
-  let loaded: LoadedPost;
-
-  try {
-    loaded = await loadPost(
-      slug,
-      preview_id,
-      preview_token,
-    );
-  } catch (error) {
-    console.error(
-      'WordPress post fetch failed:',
-      error,
-    );
-
-    notFound();
-  }
+  const loaded = await loadPost(slug, preview);
 
   const { post, isPreview } = loaded;
 

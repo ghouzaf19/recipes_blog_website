@@ -1,13 +1,175 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import {
+  InMemoryReplayStore,
+  parseStrictBoolean,
+  readBoundedRequestBody,
+  RequestBodyError,
+  type SecurityResult,
+  type ReplayStore,
+  type VerifiedRevalidation,
+  verifyLegacyRevalidation,
+  verifyRevalidationV2,
+} from '@/lib/cooketricks-security';
+
+export const runtime = 'nodejs';
+
+/*
+ * Transitional, best-effort replay protection. This store is intentionally
+ * replaceable: it is process-local and cannot coordinate multiple instances.
+ */
+const replayStore = new InMemoryReplayStore();
+
+export interface RevalidationDependencies {
+  replayStore: ReplayStore;
+  authorize: (
+    request: Request,
+    rawBody: string,
+    replayStore: ReplayStore,
+  ) => SecurityResult<VerifiedRevalidation>;
+  invalidate: (verified: VerifiedRevalidation) => void | Promise<void>;
+}
+
+function authorization(
+  request: Request,
+  rawBody: string,
+  store: ReplayStore,
+): SecurityResult<VerifiedRevalidation> {
+  const secret = process.env.COOKETRICKS_REVALIDATE_SECRET ?? '';
+  const hasV2Header = [
+    'x-cooketricks-version',
+    'x-cooketricks-timestamp',
+    'x-cooketricks-event-id',
+    'x-cooketricks-signature',
+  ].some((name) => request.headers.has(name));
+
+  if (hasV2Header) {
+    return verifyRevalidationV2(
+      request.headers,
+      rawBody,
+      secret,
+      store,
+    );
+  }
+
+  const legacyEnabled = parseStrictBoolean(
+    process.env.COOKETRICKS_ACCEPT_LEGACY_REVALIDATION,
+    true,
+  );
+
+  return verifyLegacyRevalidation(
+    request.headers,
+    rawBody,
+    secret,
+    legacyEnabled,
+  );
+}
+
+export function getRevalidationTargets(verified: VerifiedRevalidation): {
+  paths: string[];
+  tags: string[];
+} {
+  const { body } = verified;
+  const slugs = new Set<string>();
+  if (body.slug) slugs.add(body.slug);
+  if (body.previousSlug) slugs.add(body.previousSlug);
+
+  return {
+    tags: [
+      'blog-index',
+      'post',
+      ...[...slugs].map((slug) => `post:${slug}`),
+    ],
+    paths: [
+      '/',
+      '/blog',
+      '/sitemap.xml',
+      ...[...slugs].map((slug) => `/blog/${slug}`),
+    ],
+  };
+}
+
+function invalidateWordPressContent(verified: VerifiedRevalidation): void {
+  const targets = getRevalidationTargets(verified);
+
+  for (const tag of targets.tags) revalidateTag(tag, 'max');
+  for (const path of targets.paths) revalidatePath(path);
+}
+
+const defaultDependencies: RevalidationDependencies = {
+  replayStore,
+  authorize: authorization,
+  invalidate: invalidateWordPressContent,
+};
+
+function unavailableResponse(retryAfter?: number): Response {
+  const headers = retryAfter
+    ? { 'Retry-After': String(retryAfter) }
+    : undefined;
+  return new Response('Revalidation is temporarily unavailable.', {
+    status: 503,
+    headers,
+  });
+}
+
+export async function handleRevalidationRequest(
+  request: Request,
+  dependencies: RevalidationDependencies = defaultDependencies,
+): Promise<Response> {
+  let rawBody: string;
+
+  try {
+    rawBody = await readBoundedRequestBody(request);
+  } catch (error) {
+    if (error instanceof RequestBodyError) {
+      return new Response('Invalid revalidation request.', { status: 400 });
+    }
+
+    return unavailableResponse();
+  }
+
+  let verified: SecurityResult<VerifiedRevalidation>;
+
+  try {
+    verified = dependencies.authorize(
+      request,
+      rawBody,
+      dependencies.replayStore,
+    );
+  } catch {
+    return unavailableResponse();
+  }
+
+  if (!verified.ok) {
+    const headers = verified.code === 'replay-capacity'
+      ? { 'Retry-After': '5' }
+      : undefined;
+    return new Response(verified.message, {
+      status: verified.status,
+      headers,
+    });
+  }
+
+  const { body, eventId, protocol } = verified.value;
+
+  try {
+    await dependencies.invalidate(verified.value);
+    if (eventId) dependencies.replayStore.complete(eventId);
+  } catch {
+    if (eventId) dependencies.replayStore.release(eventId);
+    console.error('[revalidate:invalidation] Cache invalidation failed.');
+    return unavailableResponse(5);
+  }
+
+  return NextResponse.json({
+    revalidated: true,
+    event: body.event,
+    eventId,
+    protocol,
+  });
+}
+
 export async function POST(request: NextRequest) {
-  const expected = process.env.COOKETRICKS_REVALIDATE_SECRET;
-  if (!expected || request.headers.get('x-cooketricks-secret') !== expected) return new Response('Unauthorized', { status: 401 });
-  const body = await request.json().catch(() => null) as { slug?: string; event?: string } | null;
-  if (!body) return new Response('Bad Request', { status: 400 });
-  revalidateTag('blog-index', 'max'); revalidateTag('post', 'max');
-  revalidatePath('/'); revalidatePath('/blog'); revalidatePath('/sitemap.xml');
-  if (body.slug) { revalidateTag(`post:${body.slug}`, 'max'); revalidatePath(`/blog/${body.slug}`); }
-  return NextResponse.json({ revalidated: true, event: body.event ?? 'update' });
+  return handleRevalidationRequest(request);
 }

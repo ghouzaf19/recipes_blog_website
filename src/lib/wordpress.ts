@@ -1,5 +1,4 @@
 import 'server-only';
-import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const API_URL = (process.env.WORDPRESS_API_URL ?? 'https://cms.cooketricks.com/wp-json/wp/v2').replace(/\/$/, '');
 
@@ -65,7 +64,7 @@ interface InternalPostFilters extends PostFilters {
 
 const WORDPRESS_FETCH_TIMEOUT_MS = 10_000;
 
-type WordPressErrorCategory =
+export type WordPressErrorCategory =
   | 'timeout'
   | 'http'
   | 'invalid-json'
@@ -85,7 +84,7 @@ export interface PostListResult {
   totalPages: number;
 }
 
-class WordPressError extends Error {
+export class WordPressError extends Error {
   readonly category: WordPressErrorCategory;
   readonly status?: number;
   readonly failedPage?: number;
@@ -114,6 +113,27 @@ export function getWordPressErrorCategory(error: unknown): string {
   return error instanceof WordPressError
     ? error.category
     : 'unknown';
+}
+
+export function getWordPressErrorStatus(error: unknown): number | undefined {
+  return error instanceof WordPressError
+    ? error.status
+    : undefined;
+}
+
+export function isWordPressNotFoundError(error: unknown): boolean {
+  return error instanceof WordPressError && error.status === 404;
+}
+
+export async function resolveWordPressPost<T>(
+  operation: () => Promise<T | null>,
+): Promise<T | null> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (isWordPressNotFoundError(error)) return null;
+    throw error;
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -620,13 +640,10 @@ export async function getPostBySlug(slug: string, preview = false): Promise<Blog
 }
 
 export async function getPreviewPostById(id: number): Promise<BlogPost | null> {
-  try {
-    const path = `/posts/${id}?context=edit`;
-    const post = normalizePost(await wpFetch(path, { preview: true }));
-    if (!post) throw new WordPressError('malformed-response', path);
-    return post;
-  }
-  catch { return null; }
+  const path = `/posts/${id}?context=edit`;
+  const post = normalizePost(await wpFetch(path, { preview: true }));
+  if (!post) throw new WordPressError('malformed-response', path);
+  return post;
 }
 
 async function getAllPostPages(filters: InternalPostFilters = {}): Promise<BlogPost[]> {
@@ -659,12 +676,4 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 
 export function safeJsonLd(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c');
-}
-
-export function validPreviewToken(id: number, token: string): boolean {
-  const secret = process.env.COOKETRICKS_PREVIEW_SECRET ?? '';
-  if (!Number.isInteger(id) || id < 1 || !secret || !token) return false;
-  const expected = createHmac('sha256', secret).update(String(id)).digest('hex');
-  const left = Buffer.from(token); const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right);
 }

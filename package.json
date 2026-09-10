@@ -8,10 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run test:profile",
+    "check": "npm run lint && npm run typecheck && npm run test:profile && npm run test:integration-security",
     "content:dry-run": "node --experimental-strip-types scripts/dry-run-topical-authority.mts",
     "test:content-import": "node --experimental-strip-types --test scripts/dry-run-topical-authority.test.mts",
-    "test:profile": "node --experimental-strip-types --test scripts/cooketricks-profile.test.mts"
+    "test:profile": "node --experimental-strip-types --test scripts/cooketricks-profile.test.mts",
+    "test:integration-security": "node --experimental-strip-types --test scripts/cooketricks-integration-security.test.mts"
   },
   "dependencies": {
     "lucide-react": "^1.8.0",
