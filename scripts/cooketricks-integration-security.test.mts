@@ -99,6 +99,7 @@ const validRevalidationBody = JSON.stringify({
   previousSlug: 'previous-recipe-slug',
   status: 'publish',
 });
+const reconciliationBody = '{"event":"reconcile","scope":"all-content"}';
 
 function revalidationHeaders(
   rawBody = validRevalidationBody,
@@ -319,6 +320,8 @@ test('valid signed revalidation request is accepted with its previous slug', () 
 
   assert.equal(result.ok, true);
   if (result.ok) {
+    assert.notEqual(result.value.body.event, 'reconcile');
+    if (result.value.body.event === 'reconcile') return;
     assert.equal(result.value.body.previousSlug, 'previous-recipe-slug');
     assert.equal(result.value.protocol, 'v2');
   }
@@ -384,6 +387,32 @@ test('revalidation v2 rejects unknown body properties after authentication', () 
 
   assert.equal(result.ok, false);
   assert.equal(result.ok ? 0 : result.status, 400);
+});
+
+test('reconciliation is an exact authenticated v2 union member', () => {
+  const accepted = security.verifyRevalidationV2(
+    revalidationHeaders(reconciliationBody),
+    reconciliationBody,
+    REVALIDATION_SECRET,
+    new security.InMemoryReplayStore(),
+    NOW,
+  );
+  assert.equal(accepted.ok, true);
+  if (accepted.ok) assert.deepEqual(accepted.value.body, {
+    event: 'reconcile', scope: 'all-content',
+  });
+
+  for (const body of [
+    '{"event":"reconcile"}',
+    '{"event":"reconcile","scope":"all-content","extra":true}',
+    '{"event":"reconcile","scope":"post"}',
+  ]) {
+    const result = security.verifyRevalidationV2(
+      revalidationHeaders(body), body, REVALIDATION_SECRET,
+      new security.InMemoryReplayStore(), NOW,
+    );
+    assert.equal(result.ok, false);
+  }
 });
 
 test('revalidation v2 rejects unknown CookeTricks protocol headers', () => {
@@ -718,6 +747,7 @@ test('revalidation targets include safe global, current, and previous entries', 
     {
       tags: ['blog-index', 'post', 'post:new-slug', 'post:old-slug'],
       paths: ['/', '/blog', '/sitemap.xml', '/blog/new-slug', '/blog/old-slug'],
+      routePatterns: [],
     },
   );
 
@@ -729,6 +759,37 @@ test('revalidation targets include safe global, current, and previous entries', 
   });
   assert.deepEqual(legacyEmpty.tags, ['blog-index', 'post']);
   assert.deepEqual(legacyEmpty.paths, ['/', '/blog', '/sitemap.xml']);
+  assert.deepEqual(legacyEmpty.routePatterns, []);
+
+  assert.deepEqual(
+    revalidationRoute.getRevalidationTargets({
+      protocol: 'v2', eventId: EVENT_ID,
+      body: { event: 'reconcile', scope: 'all-content' },
+    }),
+    {
+      tags: ['blog-index', 'post'],
+      paths: ['/', '/blog', '/sitemap.xml'],
+      routePatterns: ['/blog/[slug]'],
+    },
+  );
+});
+
+test('authenticated reconciliation invalidates the complete documented target set', async () => {
+  let observed: unknown;
+  const response = await revalidationRoute.handleRevalidationRequest(
+    revalidationRequest(reconciliationBody),
+    {
+      replayStore: new security.InMemoryReplayStore(),
+      authorize: routeAuthorization,
+      invalidate: (verified) => { observed = revalidationRoute.getRevalidationTargets(verified); },
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(observed, {
+    tags: ['blog-index', 'post'],
+    paths: ['/', '/blog', '/sitemap.xml'],
+    routePatterns: ['/blog/[slug]'],
+  });
 });
 
 test('revalidation completes successful claims and rejects a replay', async () => {
@@ -747,6 +808,8 @@ test('revalidation completes successful claims and rejects a replay', async () =
   );
   assert.equal(first.status, 200);
   assert.equal(replay.status, 409);
+  assert.match(replay.headers.get('content-type') ?? '', /^application\/json\b/i);
+  assert.deepEqual(await replay.json(), { code: 'replayed-event' });
   assert.equal(invalidations, 1);
 });
 
@@ -851,6 +914,22 @@ test('rejected, ambiguous, or mixed protocol requests never invalidate caches', 
     assert.notEqual(response.status, 200);
     assert.equal(store.size, 0);
   }
+  assert.equal(invalidations, 0);
+});
+
+test('unauthenticated reconciliation invalidates nothing', async () => {
+  const headers = revalidationHeaders(reconciliationBody);
+  headers.set('X-CookeTricks-Signature', `v1=${'0'.repeat(64)}`);
+  let invalidations = 0;
+  const response = await revalidationRoute.handleRevalidationRequest(
+    revalidationRequest(reconciliationBody, headers),
+    {
+      replayStore: new security.InMemoryReplayStore(),
+      authorize: routeAuthorization,
+      invalidate: () => { invalidations += 1; },
+    },
+  );
+  assert.equal(response.status, 401);
   assert.equal(invalidations, 0);
 });
 

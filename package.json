@@ -12,7 +12,8 @@
     "content:dry-run": "node --experimental-strip-types scripts/dry-run-topical-authority.mts",
     "test:content-import": "node --experimental-strip-types --test scripts/dry-run-topical-authority.test.mts",
     "test:profile": "node --experimental-strip-types --test scripts/cooketricks-profile.test.mts",
-    "test:integration-security": "node --experimental-strip-types --test scripts/cooketricks-integration-security.test.mts"
+    "test:integration-security": "node --experimental-strip-types --test scripts/cooketricks-integration-security.test.mts",
+    "test:plugin": "node --experimental-strip-types --test scripts/cooketricks-headless-baseline.test.mts scripts/cooketricks-headless-2.4.test.mts"
   },
   "dependencies": {
     "lucide-react": "^1.8.0",

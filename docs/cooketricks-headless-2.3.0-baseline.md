@@ -5,14 +5,16 @@ plugin. Its source was imported unchanged from
 `cooketricks-headless-2.3.0.zip` on 2026-09-10.
 
 - Archive SHA-256: `6f56310b2d428b699edcd49805e30d50d959cc79c02a76f1e10cb54faa799d8b`
-- Repository source: `wordpress/plugins/cooketricks-headless/`
+- Immutable source: Git tag `cooketricks-headless-v2.3.0`, commit
+  `ebc02ce24f00c7feecbcaf9e62a84c9c92014435`
+- Evolving plugin path: `wordpress/plugins/cooketricks-headless/`
 - Plugin header version: `2.3.0`
 - `CT_HEADLESS_VERSION`: `2.3.0`
 
-The archive was checksum-verified before extraction. Each repository file was
-then compared with the corresponding ZIP entry by SHA-256. The static baseline
-test preserves that six-file manifest so later edits cannot be mistaken for
-the recovered production source.
+The archive was checksum-verified before extraction. Each tagged repository
+file was then compared with the corresponding ZIP entry by SHA-256. The static
+baseline test reads from the immutable tag—not the evolving working tree—so
+later releases cannot be mistaken for the recovered production source.
 
 ## Baseline file manifest
 
@@ -39,11 +41,9 @@ The recovered plugin:
 
 ## Baseline status
 
-This import does not install, activate, deploy, or change the production
-plugin. It does not represent a 2.4.0 implementation. Known future hardening
-work—including the approved two-test publication gate, canonical editorial
-author mapping, expiring preview authorization, and stronger webhook
-observability—must be designed, reviewed, and implemented separately.
+The tag is the rollback source for the recovered production plugin. Later
+working-tree releases do not alter the tag or its evidence. This baseline does
+not install, activate, deploy, or change production WordPress.
 
 ## Static verification
 

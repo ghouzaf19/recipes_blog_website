@@ -31,7 +31,7 @@ export interface PreviewGrant {
   protocol: 'v2' | 'legacy';
 }
 
-export interface RevalidationBody {
+export interface ContentRevalidationBody {
   event: 'create' | 'update' | 'delete' | 'status-change';
   postId: number;
   slug: string;
@@ -45,6 +45,15 @@ export interface RevalidationBody {
     | 'private'
     | 'trash';
 }
+
+export interface ReconciliationRevalidationBody {
+  event: 'reconcile';
+  scope: 'all-content';
+}
+
+export type RevalidationBody =
+  | ContentRevalidationBody
+  | ReconciliationRevalidationBody;
 
 export interface VerifiedRevalidation {
   body: RevalidationBody;
@@ -478,8 +487,22 @@ function parseRevalidationBody(rawBody: string): SecurityResult<RevalidationBody
     return failure(400, 'malformed-body', 'Invalid revalidation request.');
   }
 
+  if (!isRecord(parsed)) {
+    return failure(400, 'malformed-body', 'Invalid revalidation request.');
+  }
+
+  if (parsed.event === 'reconcile') {
+    if (
+      !hasOnlyKeys(parsed, ['event', 'scope']) ||
+      Object.keys(parsed).length !== 2 ||
+      parsed.scope !== 'all-content'
+    ) {
+      return failure(400, 'malformed-body', 'Invalid revalidation request.');
+    }
+    return { ok: true, value: { event: 'reconcile', scope: 'all-content' } };
+  }
+
   if (
-    !isRecord(parsed) ||
     !hasOnlyKeys(parsed, [
       'event',
       'postId',
@@ -514,11 +537,11 @@ function parseRevalidationBody(rawBody: string): SecurityResult<RevalidationBody
     return failure(400, 'malformed-body', 'Invalid revalidation request.');
   }
 
-  const body: RevalidationBody = {
-    event: parsed.event as RevalidationBody['event'],
+  const body: ContentRevalidationBody = {
+    event: parsed.event as ContentRevalidationBody['event'],
     postId,
     slug: parsed.slug,
-    status: parsed.status as RevalidationBody['status'],
+    status: parsed.status as ContentRevalidationBody['status'],
   };
 
   if (parsed.previousSlug !== undefined) {
@@ -655,10 +678,10 @@ export function verifyLegacyRevalidation(
     value: {
       protocol: 'legacy',
       body: {
-        event: parsed.event as RevalidationBody['event'],
+        event: parsed.event as ContentRevalidationBody['event'],
         postId: parsed.id,
         slug: parsed.slug,
-        status: parsed.status as RevalidationBody['status'],
+        status: parsed.status as ContentRevalidationBody['status'],
       },
     },
   };

@@ -20,6 +20,7 @@ export const runtime = 'nodejs';
  * replaceable: it is process-local and cannot coordinate multiple instances.
  */
 const replayStore = new InMemoryReplayStore();
+export const REVALIDATION_REPLAY_CODE = 'replayed-event';
 
 export interface RevalidationDependencies {
   replayStore: ReplayStore;
@@ -68,9 +69,17 @@ function authorization(
 
 export function getRevalidationTargets(verified: VerifiedRevalidation): {
   paths: string[];
+  routePatterns: string[];
   tags: string[];
 } {
   const { body } = verified;
+  if (body.event === 'reconcile') {
+    return {
+      tags: ['blog-index', 'post'],
+      paths: ['/', '/blog', '/sitemap.xml'],
+      routePatterns: ['/blog/[slug]'],
+    };
+  }
   const slugs = new Set<string>();
   if (body.slug) slugs.add(body.slug);
   if (body.previousSlug) slugs.add(body.previousSlug);
@@ -87,6 +96,7 @@ export function getRevalidationTargets(verified: VerifiedRevalidation): {
       '/sitemap.xml',
       ...[...slugs].map((slug) => `/blog/${slug}`),
     ],
+    routePatterns: [],
   };
 }
 
@@ -95,6 +105,7 @@ function invalidateWordPressContent(verified: VerifiedRevalidation): void {
 
   for (const tag of targets.tags) revalidateTag(tag, 'max');
   for (const path of targets.paths) revalidatePath(path);
+  for (const pattern of targets.routePatterns) revalidatePath(pattern, 'page');
 }
 
 const defaultDependencies: RevalidationDependencies = {
@@ -142,6 +153,12 @@ export async function handleRevalidationRequest(
   }
 
   if (!verified.ok) {
+    if (verified.code === REVALIDATION_REPLAY_CODE) {
+      return NextResponse.json(
+        { code: REVALIDATION_REPLAY_CODE },
+        { status: 409 },
+      );
+    }
     const headers = verified.code === 'replay-capacity'
       ? { 'Retry-After': '5' }
       : undefined;

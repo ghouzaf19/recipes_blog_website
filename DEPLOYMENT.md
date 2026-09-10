@@ -1,14 +1,18 @@
 # CookeTricks deployment guide
 
-## 1. Install the WordPress plugin
+## 1. Install or upgrade the WordPress plugin
 
-In `cms.cooketricks.com/wp-admin`, open **Plugins → Add New Plugin → Upload Plugin**, upload the checksum-verified `cooketricks-headless-2.3.0.zip`, and activate it. Keep **Settings → Permalinks → Post name** selected.
+The tagged `cooketricks-headless-v2.3.0` source is the checksum-verified rollback
+baseline. Version 2.4.0 must be reviewed, packaged from
+`wordpress/plugins/cooketricks-headless/`, and explicitly approved before it is
+uploaded. Keep **Settings → Permalinks → Post name** selected.
 
-Add these constants to `wp-config.php` above the “stop editing” line. Generate two different long random secrets; do not reuse the example values.
+Add these constants to `wp-config.php` above the “stop editing” line. Generate
+two distinct random secrets of at least 32 bytes; do not reuse the example
+values.
 
 ```php
-define('COOKETRICKS_FRONTEND_URL', 'https://cooketricks.com');
-define('COOKETRICKS_REVALIDATE_URL', 'https://cooketricks.com/api/revalidate');
+define('COOKETRICKS_PROTOCOL_VERSION', '2');
 define('COOKETRICKS_PREVIEW_SECRET', 'YOUR_LONG_PREVIEW_SECRET');
 define('COOKETRICKS_REVALIDATE_SECRET', 'YOUR_DIFFERENT_LONG_REVALIDATE_SECRET');
 ```
@@ -26,7 +30,7 @@ COOKETRICKS_ACCEPT_LEGACY_PREVIEW=true
 COOKETRICKS_ACCEPT_LEGACY_REVALIDATION=true
 ```
 
-These defaults preserve compatibility while the 2.3 plugin remains deployed. Deploy the dual-compatible Next.js receiver first, then upgrade WordPress to plugin 2.4. After 2.4 preview and revalidation have been verified, set both flags to `false` and redeploy. Rolling Next.js back while WordPress 2.3 is still active is safe; rolling WordPress back to 2.3 requires the dual receiver or both legacy flags to remain enabled.
+These defaults preserve compatibility while the 2.3 plugin remains deployed. Deploy the dual-compatible Next.js receiver first, then configure `COOKETRICKS_PROTOCOL_VERSION` to exactly `2` and upgrade WordPress to plugin 2.4. Version 2.4 fails closed if the protocol or v2 endpoint configuration is missing or invalid; it never falls back to legacy authentication. After 2.4 preview and revalidation have been verified, set both flags to `false` and redeploy. Rolling Next.js back while WordPress 2.3 is still active is safe; rolling WordPress back to 2.3 requires the dual receiver or both legacy flags to remain enabled.
 
 ```bash
 npm ci
@@ -36,6 +40,33 @@ npm run start
 ```
 
 Use Node.js 20 or newer. Configure the production start command as `npm run start` and the application port supplied by Hostinger.
+
+## Environment-isolated plugin configuration
+
+Set WP_ENVIRONMENT_TYPE to exactly production, staging, development, or local.
+The plugin fails closed for every other value.
+
+- **Production** ignores staging and local overrides. It always signs only for
+  https://cooketricks.com and sends revalidation only to
+  https://cooketricks.com/api/revalidate.
+- **Staging** requires COOKETRICKS_STAGING_FRONTEND_ORIGIN, an exact HTTPS
+  origin that is not cooketricks.com, www.cooketricks.com, or
+  cms.cooketricks.com. It also requires separate
+  COOKETRICKS_STAGING_PREVIEW_SECRET and
+  COOKETRICKS_STAGING_REVALIDATE_SECRET values. There is no fallback to
+  production values or hosts.
+- **Development/local** requires COOKETRICKS_LOCAL_FRONTEND_ORIGIN and
+  separate local preview and revalidation secrets. The origin must use HTTP and
+  an explicit loopback host: localhost, 127.0.0.1, or ::1.
+
+Origins cannot include a path, query, fragment, credentials, wildcard, or
+production-alternate host. Staging must use the isolated topology:
+
+    staging WordPress → staging Next.js receiver
+
+Deploy the staging Next.js receiver and its staging-only secrets first, then
+the staging WordPress plugin. A failed/missing configuration creates no signed
+preview URL and sends no webhook.
 
 ## 3. WordPress content workflow
 
@@ -59,6 +90,51 @@ Use Node.js 20 or newer. Configure the production start command as `npm run star
 - Restrict WordPress admin accounts and enable two-factor authentication where possible.
 - Rotate the Application Password and both integration secrets if they are exposed.
 - Do not install a second recipe-schema plugin unless duplicate JSON-LD is disabled.
+
+## 2.4 delivery queue and rollback
+
+Version 2.4 writes strict revalidation event bodies to a bounded WordPress
+database queue and delivers them asynchronously through WP-Cron. The queue
+holds no secret or signature; those are read and calculated only when a worker
+sends an event. Confirm that WP-Cron runs at least once per minute, preferably
+through a hosting system cron on low-traffic sites.
+
+Successful HTTP 200 responses and authenticated replay HTTP 409 responses mark
+the event completed. Network failures and HTTP 408, 425, 429, and 5xx responses
+retry with bounded exponential delays; `Retry-After` is used only for 429 and
+503 and is capped at four hours. Other 4xx responses become permanent failures.
+Events have six delivery attempts, active work older than seven days becomes a
+dead letter, and terminal records are retained for 30 days. The table holds at
+most 2,048 records. Each worker processes at most four events within a
+20-second budget, using four-second HTTP requests. Operational diagnostics are
+sanitized and never contain response bodies, credentials, headers, signatures,
+or private editorial notes.
+
+Activation creates or upgrades the InnoDB queue table idempotently, verifies its
+columns and indexes, then schedules its worker. The plugin only accepts the
+exact HTTPS `cooketricks.com` frontend and `/api/revalidate` endpoint; hosts,
+ports, credentials, queries, fragments, and redirects are rejected. Deactivation
+unschedules the worker without deleting queue data. Network activation is not
+supported. There is no data-deleting uninstall routine. To roll back,
+deactivate 2.4, restore the exact `cooketricks-headless-v2.3.0` tag, keep both
+Next.js legacy flags enabled, and activate 2.3. Queue data stays preserved for
+a later 2.4 return.
+
+### Reconciliation after an enqueue failure
+
+If a content-event queue insert fails, the editor save still succeeds. The
+plugin writes one bounded WordPress option marker containing only a generation
+and timestamp—never post content, slugs, payloads, credentials, signatures, or
+private metadata. The next cron worker sends the strict signed V2
+{"event":"reconcile","scope":"all-content"} request directly and clears only
+the matching marker after HTTP 200 or the authenticated replay HTTP 409 marker.
+
+The marker is normally retried on the next one-minute worker run. It remains
+pending after configuration, network, authentication, schema, capacity, or
+server failures. If both the custom queue table and the WordPress options table
+cannot be written, no durable recovery record can be made; administrators see
+only a sanitized diagnostic and must trigger a later reconciliation after the
+database recovers.
 
 ## 2.4 receiver protocols
 
