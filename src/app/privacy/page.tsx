@@ -44,7 +44,7 @@ export default function PrivacyPage() {
 
           <h2 className="text-2xl font-medium text-gray-900 mt-10 mb-4">Contact Us</h2>
           <p className="mb-6">
-            If you have questions or comments about this Privacy Policy, please contact us at: <a href="mailto:privacy@cooketricks.com" className="text-[#1a73e8] hover:underline">privacy@cooketricks.com</a>.
+            If you have questions or comments about this Privacy Policy, please contact us at: <a href="mailto:contact@cooketricks.com" className="text-[#1a73e8] hover:underline">contact@cooketricks.com</a>.
           </p>
         </div>
       </div>

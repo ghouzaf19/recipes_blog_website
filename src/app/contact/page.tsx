@@ -28,15 +28,15 @@ export default function ContactPage() {
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-gray-900 mb-1 uppercase tracking-wider text-sm">Email</h3>
-              <a href="mailto:hello@cooketricks.com" className="text-[#1a73e8] hover:text-[#F06D06] transition-colors text-lg">
-                hello@cooketricks.com
+              <a href="mailto:contact@cooketricks.com" className="text-[#1a73e8] hover:text-[#F06D06] transition-colors text-lg">
+                contact@cooketricks.com
               </a>
             </div>
             
             <div>
               <h3 className="font-bold text-gray-900 mb-1 uppercase tracking-wider text-sm">Partnerships</h3>
-              <a href="mailto:partners@cooketricks.com" className="text-[#1a73e8] hover:text-[#F06D06] transition-colors text-lg">
-                partners@cooketricks.com
+              <a href="mailto:contact@cooketricks.com" className="text-[#1a73e8] hover:text-[#F06D06] transition-colors text-lg">
+                contact@cooketricks.com
               </a>
             </div>
             
