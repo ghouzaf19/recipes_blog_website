@@ -56,8 +56,9 @@ The plugin fails closed for every other value.
   COOKETRICKS_STAGING_REVALIDATE_SECRET values. There is no fallback to
   production values or hosts.
 - **Development/local** requires COOKETRICKS_LOCAL_FRONTEND_ORIGIN and
-  separate local preview and revalidation secrets. The origin must use HTTP and
-  an explicit loopback host: localhost, 127.0.0.1, or ::1.
+  separate local preview and revalidation secrets. The origin must use HTTP,
+  an explicit loopback host (localhost, 127.0.0.1, or ::1), and an explicit
+  port, for example http://127.0.0.1:3100.
 
 Origins cannot include a path, query, fragment, credentials, wildcard, or
 production-alternate host. Staging must use the isolated topology:
@@ -67,6 +68,12 @@ production-alternate host. Staging must use the isolated topology:
 Deploy the staging Next.js receiver and its staging-only secrets first, then
 the staging WordPress plugin. A failed/missing configuration creates no signed
 preview URL and sends no webhook.
+
+For one local/development delivery only, version 2.4 temporarily permits the
+already validated exact loopback `/api/revalidate` URL through WordPress's safe
+HTTP filters, including its configured port. The callbacks are removed in a
+`finally` block immediately after `wp_safe_remote_post()` returns or fails.
+Production and staging never register this exception.
 
 ## 3. WordPress content workflow
 

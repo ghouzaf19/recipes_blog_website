@@ -40,6 +40,29 @@ final class CT_Integration {
         ];
     }
 
+    /**
+     * LocalWP rejects loopback destinations through wp_safe_remote_post() by
+     * default. This deliberately authorizes only the already validated,
+     * configured local revalidation URL; production and staging never qualify.
+     */
+    public static function allows_local_safe_revalidation_request(string $url): bool {
+        if (!in_array(wp_get_environment_type(), ['local', 'development'], true)) return false;
+        $configuration = self::revalidation_configuration();
+        if ($configuration === null || !hash_equals($configuration['url'], $url)) return false;
+
+        $parts = wp_parse_url($url);
+        if (!is_array($parts)) return false;
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower(trim((string) ($parts['host'] ?? ''), '[]'));
+        $port = (int) ($parts['port'] ?? 0);
+        return $scheme === 'http'
+            && in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+            && $port >= 1
+            && $port <= 65535
+            && ($parts['path'] ?? '') === '/api/revalidate'
+            && !isset($parts['user'], $parts['pass'], $parts['query'], $parts['fragment']);
+    }
+
     public static function record_operational_diagnostic(string $category, string $code): void {
         if (!in_array($category, self::DIAGNOSTIC_CATEGORIES, true)) return;
         update_option(self::DIAGNOSTIC_OPTION, [
@@ -162,7 +185,8 @@ final class CT_Integration {
             return esc_url_raw($origin);
         }
         if ($environment === 'local') {
-            if ($scheme !== 'http' || !in_array($host, ['localhost', '127.0.0.1', '::1'], true)) return null;
+            $port = (int) ($parts['port'] ?? 0);
+            if ($scheme !== 'http' || !in_array($host, ['localhost', '127.0.0.1', '::1'], true) || $port < 1 || $port > 65535) return null;
             return esc_url_raw($origin);
         }
         return null;

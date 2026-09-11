@@ -338,20 +338,60 @@ final class CT_Delivery_Queue {
         $timestamp = time();
         $signature_payload = "revalidate:v2\n{$timestamp}\n{$event_id}\n{$body}";
         $signature = hash_hmac('sha256', $signature_payload, $configuration['secret']);
-        return wp_safe_remote_post($configuration['url'], [
-            'timeout' => self::HTTP_TIMEOUT_SECONDS,
-            'redirection' => 0,
-            'blocking' => true,
-            'limit_response_size' => self::REPLAY_RESPONSE_LIMIT_BYTES,
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'X-CookeTricks-Version' => '2',
-                'X-CookeTricks-Timestamp' => (string) $timestamp,
-                'X-CookeTricks-Event-ID' => $event_id,
-                'X-CookeTricks-Signature' => 'v1=' . $signature,
-            ],
-            'body' => $body,
-        ]);
+        $filters = self::register_local_safe_request_filters($configuration['url']);
+        try {
+            return wp_safe_remote_post($configuration['url'], [
+                'timeout' => self::HTTP_TIMEOUT_SECONDS,
+                'redirection' => 0,
+                'blocking' => true,
+                'limit_response_size' => self::REPLAY_RESPONSE_LIMIT_BYTES,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'X-CookeTricks-Version' => '2',
+                    'X-CookeTricks-Timestamp' => (string) $timestamp,
+                    'X-CookeTricks-Event-ID' => $event_id,
+                    'X-CookeTricks-Signature' => 'v1=' . $signature,
+                ],
+                'body' => $body,
+            ]);
+        } finally {
+            self::remove_local_safe_request_filters($filters);
+        }
+    }
+
+    /**
+     * @return array{external:callable,ports:callable}|null
+     */
+    private static function register_local_safe_request_filters(string $url): ?array {
+        if (!CT_Integration::allows_local_safe_revalidation_request($url)) return null;
+        $parts = wp_parse_url($url);
+        if (!is_array($parts)) return null;
+        $expected_host = strtolower(trim((string) ($parts['host'] ?? ''), '[]'));
+        $expected_port = (int) ($parts['port'] ?? 0);
+        if ($expected_port < 1 || $expected_port > 65535) return null;
+
+        $matches_exact_destination = static function(string $host, string $request_url) use ($url, $expected_host): bool {
+            return hash_equals($url, $request_url)
+                && hash_equals($expected_host, strtolower(trim($host, '[]')));
+        };
+        $external = static function(bool $is_external, string $host, string $request_url) use ($matches_exact_destination): bool {
+            return $matches_exact_destination($host, $request_url) ? true : $is_external;
+        };
+        $ports = static function(array $allowed_ports, string $host, string $request_url) use ($matches_exact_destination, $expected_port): array {
+            if (!$matches_exact_destination($host, $request_url)) return $allowed_ports;
+            if (!in_array($expected_port, $allowed_ports, true)) $allowed_ports[] = $expected_port;
+            return $allowed_ports;
+        };
+        add_filter('http_request_host_is_external', $external, PHP_INT_MAX, 3);
+        add_filter('http_allowed_safe_ports', $ports, PHP_INT_MAX, 3);
+        return ['external' => $external, 'ports' => $ports];
+    }
+
+    /** @param array{external:callable,ports:callable}|null $filters */
+    private static function remove_local_safe_request_filters(?array $filters): void {
+        if ($filters === null) return;
+        remove_filter('http_request_host_is_external', $filters['external'], PHP_INT_MAX);
+        remove_filter('http_allowed_safe_ports', $filters['ports'], PHP_INT_MAX);
     }
 
     public static function is_retryable_status(int $status): bool {

@@ -321,7 +321,7 @@ function destinationShadowIsValid(environment: string, raw: string): boolean {
     const clean = url.username === "" && url.password === "" && url.search === "" && url.hash === "" && url.pathname.replace(/\/$/, "") === "";
     if (environment === "production") return clean && raw === "https://cooketricks.com";
     if (environment === "staging") return clean && url.protocol === "https:" && url.port === "" && !["cooketricks.com", "www.cooketricks.com", "cms.cooketricks.com"].includes(url.hostname);
-    if (environment === "local") return clean && url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if (environment === "local") return clean && url.protocol === "http:" && url.port !== "" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
     return false;
   } catch { return false; }
 }
@@ -336,6 +336,7 @@ test("source-only environment destination model isolates production, staging, an
   }
   assert.equal(destinationShadowIsValid("local", "http://localhost:3000"), true);
   assert.equal(destinationShadowIsValid("local", "http://127.0.0.1:3000"), true);
+  assert.equal(destinationShadowIsValid("local", "http://127.0.0.1"), false);
   assert.equal(destinationShadowIsValid("local", "https://localhost:3000"), false);
   assert.equal(destinationShadowIsValid("local", "http://example.test:3000"), false);
   assert.equal(destinationShadowIsValid("invalid", "https://staging.example.test"), false);
@@ -346,6 +347,74 @@ test("source-only environment destination model isolates production, staging, an
   assert.match(integration, /PRODUCTION_ORIGIN = 'https:\/\/cooketricks\.com'/);
   assert.match(integration, /isset\(\$parts\['port'\]\)/);
   assert.match(queue, /wp_safe_remote_post/);
+  assert.match(queue, /'redirection' => 0/);
+});
+
+function localSafeRequestShadow(
+  environment: string,
+  configuredUrl: string,
+  requestUrl: string,
+): boolean {
+  if (!['local', 'development'].includes(environment) || configuredUrl !== requestUrl) return false;
+  try {
+    const url = new URL(requestUrl);
+    return url.protocol === 'http:'
+      && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+      && url.port !== ''
+      && url.pathname === '/api/revalidate'
+      && url.username === ''
+      && url.password === ''
+      && url.search === ''
+      && url.hash === '';
+  } catch {
+    return false;
+  }
+}
+
+test("local safe HTTP exception accepts only the exact configured loopback revalidation URL", () => {
+  const configured = 'http://127.0.0.1:3100/api/revalidate';
+  assert.equal(localSafeRequestShadow('local', configured, configured), true);
+  assert.equal(localSafeRequestShadow('development', configured, configured), true);
+  for (const request of [
+    'http://localhost:3100/api/revalidate',
+    'http://127.0.0.1:3101/api/revalidate',
+    'http://127.0.0.1:3100/other',
+    'http://127.0.0.1:3100/api/revalidate?next=x',
+    'http://127.0.0.1:3100/api/revalidate#fragment',
+    'http://user:pass@127.0.0.1:3100/api/revalidate',
+    'http://192.168.1.10:3100/api/revalidate',
+  ]) {
+    assert.equal(localSafeRequestShadow('local', configured, request), false, request);
+  }
+  assert.equal(localSafeRequestShadow('production', configured, configured), false);
+  assert.equal(localSafeRequestShadow('staging', configured, configured), false);
+  assert.match(integration, /allows_local_safe_revalidation_request/);
+  assert.match(integration, /in_array\(wp_get_environment_type\(\), \['local', 'development'\], true\)/);
+  assert.match(integration, /hash_equals\(\$configuration\['url'\], \$url\)/);
+  assert.match(integration, /\(\$parts\['path'\] \?\? ''\) === '\/api\/revalidate'/);
+});
+
+test("local safe HTTP filters are request-scoped and preserve safe POST delivery", () => {
+  let registered = 0;
+  const request = (result: 'success' | 'wp-error') => {
+    registered += 2;
+    try {
+      return result;
+    } finally {
+      registered -= 2;
+    }
+  };
+  assert.equal(request('success'), 'success');
+  assert.equal(registered, 0);
+  assert.equal(request('wp-error'), 'wp-error');
+  assert.equal(registered, 0);
+  assert.match(queue, /register_local_safe_request_filters\(\$configuration\['url'\]\)/);
+  assert.match(queue, /add_filter\('http_request_host_is_external', \$external, PHP_INT_MAX, 3\)/);
+  assert.match(queue, /add_filter\('http_allowed_safe_ports', \$ports, PHP_INT_MAX, 3\)/);
+  assert.match(queue, /finally \{\s*self::remove_local_safe_request_filters\(\$filters\);\s*\}/);
+  assert.match(queue, /remove_filter\('http_request_host_is_external', \$filters\['external'\], PHP_INT_MAX\)/);
+  assert.match(queue, /remove_filter\('http_allowed_safe_ports', \$filters\['ports'\], PHP_INT_MAX\)/);
+  assert.match(queue, /return wp_safe_remote_post\(\$configuration\['url'\], \[/);
   assert.match(queue, /'redirection' => 0/);
 });
 

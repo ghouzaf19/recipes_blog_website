@@ -52,9 +52,13 @@ cms.cooketricks.com. This creates an isolated path:
 staging WordPress -> staging Next.js receiver
 
 Development and local environments require COOKETRICKS_LOCAL_FRONTEND_ORIGIN
-and separate local secrets. Only explicit HTTP loopback origins are accepted:
-localhost, 127.0.0.1, or ::1. Missing or invalid configuration fails closed;
-the plugin produces no signed preview URL and sends no webhook.
+and separate local secrets. Only explicit HTTP loopback origins with an
+explicit port are accepted: localhost, 127.0.0.1, or ::1. Missing or invalid
+configuration fails closed; the plugin produces no signed preview URL and sends
+no webhook. For a single local/development delivery, the plugin temporarily
+allows only that exact configured `/api/revalidate` URL and port through
+WordPress's safe HTTP filters, then removes both callbacks in a finally block.
+Production and staging never receive this exception.
 
 == Protocol selection ==
 
